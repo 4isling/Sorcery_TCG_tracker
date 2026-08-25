@@ -39,6 +39,20 @@ android {
     }
 }
 
+// AGP 9.2 embarque le compilateur Kotlin 2.2.10 (métadonnées lisibles jusqu'à 2.3.0).
+// Coil 3.5 tire transitivement kotlin-stdlib 2.4.0, que ce compilateur refuse.
+// On force toute la famille stdlib sur la version du compilateur.
+configurations.all {
+    resolutionStrategy {
+        force(
+            "org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${libs.versions.kotlin.get()}",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${libs.versions.kotlin.get()}",
+            "org.jetbrains.kotlin:kotlin-stdlib-common:${libs.versions.kotlin.get()}",
+        )
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -48,6 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
@@ -65,6 +80,8 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
+
+    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
