@@ -1,5 +1,6 @@
 package com.hayse.sorcery.feature.collection.ui.screen.composable
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -27,10 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
+import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.SetCompletion
@@ -49,8 +50,8 @@ fun CollectionCardRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            AsyncImage(
-                model = item.card.imageUri,
+            CardImage(
+                imageUri = item.card.imageUri,
                 contentDescription = item.card.name,
                 modifier = Modifier.size(width = 56.dp, height = 78.dp),
             )
@@ -206,11 +207,29 @@ fun AdvancedFilters(
     onSet: (String?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .animateContentSize(),
+    ) {
         TextButton(onClick = { expanded = !expanded }) {
             Text(if (expanded) "Masquer les filtres avancés" else "Filtres avancés")
         }
         if (expanded) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                types.forEach { entry ->
+                    FilterChip(
+                        selected = type == entry,
+                        onClick = { onType(if (type == entry) null else entry) },
+                        label = { Text(entry) },
+                    )
+                }
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -224,7 +243,6 @@ fun AdvancedFilters(
                         label = { Text(entry.name) },
                     )
                 }
-                DropdownFilter("Type", type, types, onType)
                 DropdownFilter("Set", setName, sets, onSet)
             }
         }

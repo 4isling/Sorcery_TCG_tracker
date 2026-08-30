@@ -56,6 +56,7 @@ object CollectionComputations {
         cards: List<CardWithPrintings>,
         entries: List<CollectionEntryEntity>,
         ownership: Ownership,
+        imageUriForSlugs: (List<String>) -> String? = { null },
     ): List<CollectionItem> {
         val owned = ownedBySlug(entries)
         return cards.mapNotNull { cwp ->
@@ -63,14 +64,15 @@ object CollectionComputations {
                 .flatMap { owned[it.slug].orEmpty() }
                 .map { OwnedCopy(it.printingSlug, it.finish, it.quantity) }
             val total = copies.sumOf { it.quantity }
-            val maxCopies = cwp.toCard().rarity?.maxCopies ?: Int.MAX_VALUE
+            val card = cwp.toCard(imageUriForSlugs)
+            val maxCopies = card.rarity?.maxCopies ?: Int.MAX_VALUE
             val keep = when (ownership) {
                 Ownership.All -> true
                 Ownership.Owned -> total > 0
                 Ownership.Missing -> total == 0
                 Ownership.Surplus -> total > maxCopies
             }
-            if (keep) CollectionItem(cwp.toCard(), copies, total) else null
+            if (keep) CollectionItem(card, copies, total) else null
         }
     }
 
@@ -94,10 +96,11 @@ object CollectionComputations {
     fun surplus(
         cards: List<CardWithPrintings>,
         entries: List<CollectionEntryEntity>,
+        imageUriForSlugs: (List<String>) -> String? = { null },
     ): List<SurplusCard> {
         val owned = ownedBySlug(entries)
         return cards.mapNotNull { cwp ->
-            val card = cwp.toCard()
+            val card = cwp.toCard(imageUriForSlugs)
             val max = card.rarity?.maxCopies ?: return@mapNotNull null
             val totalOwned = cwp.printings.sumOf { p -> owned[p.slug].orEmpty().sumOf { it.quantity } }
             val over = totalOwned - max
@@ -109,11 +112,12 @@ object CollectionComputations {
         cards: List<CardWithPrintings>,
         entries: List<CollectionEntryEntity>,
         setName: String,
+        imageUriForSlugs: (List<String>) -> String? = { null },
     ): List<Card> {
         val ownedSlugs = entries.filter { it.quantity > 0 }.map { it.printingSlug }.toSet()
         return cards.filter { cwp ->
             val inSet = cwp.printings.filter { it.setName == setName }
             inSet.isNotEmpty() && inSet.none { it.slug in ownedSlugs }
-        }.map { it.toCard() }.sortedBy { it.name }
+        }.map { it.toCard(imageUriForSlugs) }.sortedBy { it.name }
     }
 }

@@ -7,12 +7,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,11 +25,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -37,6 +42,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
+import com.hayse.sorcery.core.ui.ProvideCardList
+import com.hayse.sorcery.core.ui.ProvideTopBarSearch
+import com.hayse.sorcery.core.ui.composable.EmptyState
+import com.hayse.sorcery.core.ui.isExpanded
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
+import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.collection.ui.screen.composable.AdvancedFilters
 import com.hayse.sorcery.feature.collection.ui.screen.composable.CollectionCardRow
 import com.hayse.sorcery.feature.collection.ui.screen.composable.ImportModeDialog
@@ -62,6 +75,7 @@ fun CollectionScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val spacing = LocalSpacing.current
 
     var pendingUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -79,6 +93,15 @@ fun CollectionScreen(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri -> if (uri != null) pendingUri = uri }
 
+    if (state.tab == CollectionTab.Collection) {
+        ProvideTopBarSearch(
+            query = state.filter.query.orEmpty(),
+            onQueryChange = viewModel::setQuery,
+            placeholder = "Rechercher une carte",
+        )
+        ProvideCardList(state.items.map { it.card.name })
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         SecondaryTabRow(selectedTabIndex = state.tab.ordinal) {
             CollectionTab.entries.forEach { tab ->
@@ -95,7 +118,7 @@ fun CollectionScreen(
             enabled = !state.importing,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = spacing.md, vertical = spacing.sm),
         ) { Text(if (state.importing) "Import en cours…" else "Importer un CSV Curiosa") }
 
         when (state.tab) {
@@ -127,16 +150,21 @@ private fun CollectionTabContent(
     viewModel: CollectionViewModel,
     onCardClick: (String) -> Unit,
 ) {
+    if (LocalWindowWidthSizeClass.current.isExpanded) {
+        ExpandedCollectionTabContent(state, viewModel, onCardClick)
+        return
+    }
     val listState = rememberLazyListState()
     // Les filtres sont le 1er item : dès qu'on scrolle au-delà, ils sortent de l'écran.
     val filtersHidden by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
     var showFilterSheet by remember { mutableStateOf(false) }
+    val spacing = LocalSpacing.current
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(spacing.md),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm),
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "__filters__") { CollectionFilters(state, viewModel) }
@@ -146,7 +174,7 @@ private fun CollectionTabContent(
                     Box(
                         modifier = Modifier
                             .fillParentMaxWidth()
-                            .padding(32.dp),
+                            .padding(spacing.xl),
                         contentAlignment = Alignment.Center,
                     ) { Text("Aucune carte", style = MaterialTheme.typography.bodyLarge) }
                 }
@@ -166,7 +194,7 @@ private fun CollectionTabContent(
                 onClick = { showFilterSheet = true },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .padding(spacing.md),
             ) { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Filtres") }
         }
     }
@@ -176,8 +204,49 @@ private fun CollectionTabContent(
             CollectionFilters(
                 state = state,
                 viewModel = viewModel,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp),
+                modifier = Modifier.padding(horizontal = spacing.md).padding(bottom = spacing.lg),
             )
+        }
+    }
+}
+
+/** Vue tablette : filtres fixes dans un panneau latéral, liste des cartes à droite. */
+@Composable
+private fun ExpandedCollectionTabContent(
+    state: CollectionViewState,
+    viewModel: CollectionViewModel,
+    onCardClick: (String) -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    Row(Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .width(320.dp)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
+                .padding(spacing.md),
+        ) {
+            CollectionFilters(state, viewModel)
+        }
+        VerticalDivider()
+        if (state.items.isEmpty()) {
+            Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                Text("Aucune carte", style = MaterialTheme.typography.bodyLarge)
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(spacing.md),
+                verticalArrangement = Arrangement.spacedBy(spacing.sm),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            ) {
+                items(state.items, key = { it.card.name }) { item ->
+                    CollectionCardRow(
+                        item = item,
+                        onClick = { onCardClick(item.card.name) },
+                        onAdjust = viewModel::adjust,
+                    )
+                }
+            }
         }
     }
 }
@@ -190,15 +259,8 @@ private fun CollectionFilters(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.sm),
     ) {
-        OutlinedTextField(
-            value = state.filter.query.orEmpty(),
-            onValueChange = viewModel::setQuery,
-            label = { Text("Rechercher") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
         QuickFilterChips(
             ownership = state.filter.ownership,
             element = state.filter.element,
@@ -224,16 +286,19 @@ private fun CompletionList(
     onSetClick: (String) -> Unit,
 ) {
     if (completions.isEmpty()) {
-        EmptyState("Aucun set")
+        EmptyState(title = "Aucun set")
         return
     }
+    val spacing = LocalSpacing.current
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(completions, key = { it.setName }) { completion ->
-            SetCompletionRow(completion = completion, onClick = { onSetClick(completion.setName) })
+            SorceryTheme(set = sorcerySetFromName(completion.setName)) {
+                SetCompletionRow(completion = completion, onClick = { onSetClick(completion.setName) })
+            }
         }
     }
 }
@@ -243,22 +308,16 @@ private fun SurplusList(
     surplus: List<com.hayse.sorcery.feature.collection.domain.model.SurplusCard>,
 ) {
     if (surplus.isEmpty()) {
-        EmptyState("Aucun surplus")
+        EmptyState(title = "Aucun surplus")
         return
     }
+    val spacing = LocalSpacing.current
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(surplus, key = { it.card.name }) { row -> SurplusRow(row) }
-    }
-}
-
-@Composable
-private fun EmptyState(message: String) {
-    Box(Modifier.fillMaxSize(), Alignment.Center) {
-        Text(message, style = MaterialTheme.typography.bodyLarge)
     }
 }
 

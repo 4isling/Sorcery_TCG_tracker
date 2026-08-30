@@ -44,7 +44,7 @@ fun AffinityRow(
                         symbol = "−",
                         contentDescription = "Diminuer ${element.name}",
                         onClick = { onDelta(element, -1) },
-                        onLongClick = { onDelta(element, -1) },
+                        onLongClick = { onDelta(element, -5) },
                         size = 32.dp,
                     )
                     Text(
@@ -57,7 +57,7 @@ fun AffinityRow(
                         symbol = "+",
                         contentDescription = "Augmenter ${element.name}",
                         onClick = { onDelta(element, 1) },
-                        onLongClick = { onDelta(element, 1) },
+                        onLongClick = { onDelta(element, 5) },
                         size = 32.dp,
                     )
                 }

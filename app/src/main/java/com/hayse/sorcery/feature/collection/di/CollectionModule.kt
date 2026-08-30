@@ -15,7 +15,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val collectionModule = module {
-    single<CollectionRepository> { CollectionRepositoryImpl(collectionDao = get(), cardDao = get()) }
+    single<CollectionRepository> { CollectionRepositoryImpl(collectionDao = get(), cardDao = get(), imageResolver = get()) }
 
     factory { ObserveCollectionUseCase(get()) }
     factory { ObserveOwnedForCardUseCase(get()) }

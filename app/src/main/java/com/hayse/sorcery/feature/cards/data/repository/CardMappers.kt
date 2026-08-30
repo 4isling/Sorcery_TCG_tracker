@@ -45,8 +45,8 @@ private fun CardEntity.toCard(imageUri: String?): Card = Card(
     imageUri = imageUri,
 )
 
-fun CardWithPrintings.toCard(): Card =
-    card.toCard(imageUri = printings.firstOrNull()?.slug?.let(::imageUri))
+fun CardWithPrintings.toCard(imageUriForSlugs: (List<String>) -> String? = { null }): Card =
+    card.toCard(imageUri = imageUriForSlugs(printings.map { it.slug }))
 
 fun PrintingEntity.toDomain(): Printing = Printing(
     slug = slug,
@@ -60,7 +60,7 @@ fun PrintingEntity.toDomain(): Printing = Printing(
     imageUri = imageUri(slug),
 )
 
-fun CardWithPrintings.toDetail(): CardDetail = CardDetail(
-    card = toCard(),
+fun CardWithPrintings.toDetail(imageUriForSlugs: (List<String>) -> String? = { null }): CardDetail = CardDetail(
+    card = toCard(imageUriForSlugs),
     printings = printings.map { it.toDomain() },
 )

@@ -1,29 +1,37 @@
 package com.hayse.sorcery.feature.cards.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.core.ui.LocalCardListContext
+import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.core.ui.composable.ElementIcon
+import com.hayse.sorcery.core.ui.composable.EmptyState
+import com.hayse.sorcery.core.ui.composable.LoadingState
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
+import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.cards.domain.model.CardDetail
 import com.hayse.sorcery.feature.cards.domain.model.Printing
@@ -35,21 +43,39 @@ import org.koin.core.parameter.parametersOf
 fun CardDetailScreen(
     name: String,
     modifier: Modifier = Modifier,
-    viewModel: CardDetailViewModel = koinViewModel { parametersOf(name) },
+    viewModel: CardDetailViewModel = koinViewModel(key = name) { parametersOf(name) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when {
-        state.loading -> Box(modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-        state.detail == null -> Box(modifier.fillMaxSize(), Alignment.Center) {
-            Text("Carte introuvable", style = MaterialTheme.typography.bodyLarge)
-        }
+        state.loading -> LoadingState(modifier)
+        state.detail == null -> EmptyState(title = "Carte introuvable", modifier = modifier)
         else -> DetailContent(
             detail = state.detail!!,
             owned = state.owned,
             onAdjust = viewModel::adjust,
             modifier = modifier,
         )
+    }
+}
+
+/**
+ * Détail de carte avec swipe précédent/suivant : parcourt la liste ordonnée publiée par
+ * l'écran d'origine ([LocalCardListContext]). Si cette carte n'y figure pas (ou liste vide),
+ * on retombe sur l'affichage d'une seule carte.
+ */
+@Composable
+fun CardDetailPager(name: String, modifier: Modifier = Modifier) {
+    val context = LocalCardListContext.current
+    val names = remember { context.names }
+    val startIndex = remember(names, name) { names.indexOf(name) }
+    if (startIndex < 0) {
+        CardDetailScreen(name = name, modifier = modifier)
+        return
+    }
+    val pagerState = rememberPagerState(initialPage = startIndex, pageCount = { names.size })
+    HorizontalPager(state = pagerState, modifier = modifier) { page ->
+        CardDetailScreen(name = names[page])
     }
 }
 
@@ -61,16 +87,20 @@ private fun DetailContent(
     modifier: Modifier = Modifier,
 ) {
     val card = detail.card
+    val spacing = LocalSpacing.current
+    val set = sorcerySetFromName(detail.printings.firstOrNull()?.setName)
+    SorceryTheme(set = set) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
-        AsyncImage(
-            model = detail.printings.firstOrNull()?.imageUri ?: card.imageUri,
+        CardImage(
+            imageUri = detail.printings.firstOrNull()?.imageUri ?: card.imageUri,
             contentDescription = card.name,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth(0.7f)
                 .align(Alignment.CenterHorizontally),
@@ -101,6 +131,7 @@ private fun DetailContent(
                 onAdjust = { delta -> onAdjust(printing.slug, printing.finish, delta) },
             )
         }
+    }
     }
 }
 

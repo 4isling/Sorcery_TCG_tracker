@@ -27,4 +27,26 @@ sealed interface GameEvent {
 
     /** Nouveau tour : incrémente le compteur, bascule le joueur actif, reset son mana = nb de sites contrôlés. */
     data object NewTurn : GameEvent
+
+    /**
+     * Jet de dés. Les résultats sont tirés hors du reducer et stockés ici : le reducer est un no-op,
+     * donc le replay ré-émet exactement les mêmes résultats (déterministe).
+     */
+    data class DiceRoll(
+        val faces: Int,
+        val results: List<Int>,
+        val purpose: DiceRollPurpose = DiceRollPurpose.Generic,
+    ) : GameEvent
+
+    /** Tirage désignant le joueur qui commence ; [chosen] est stocké, jamais re-tiré au replay. */
+    data class FirstPlayerRoll(val results: List<Int>, val chosen: PlayerId) : GameEvent
+}
+
+/** Contexte d'un [GameEvent.DiceRoll], pour l'affichage dans le journal. */
+enum class DiceRollPurpose {
+    /** Lanceur générique (nb dés × faces). */
+    Generic,
+
+    /** Setup du passif de l'avatar Harbinger : 3d20 pour choisir les cases. */
+    Harbinger,
 }

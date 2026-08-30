@@ -5,12 +5,13 @@ import com.hayse.sorcery.feature.game_tracker.domain.model.AvatarStatus
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameConfig
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
+import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerIdentity
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerState
 import kotlinx.serialization.Serializable
 
 /**
- * Représentation persistée de l'état de partie (DataStore). L'historique n'est pas persisté :
- * on reprend la partie en cours après un process death, mais l'undo ne remonte pas avant le redémarrage.
+ * Représentation persistée de l'état de partie (DataStore). Les nouveaux champs ont des valeurs par
+ * défaut pour rester rétro-compatibles avec les JSON écrits par les versions précédentes.
  */
 @Serializable
 data class GameStateData(
@@ -18,6 +19,7 @@ data class GameStateData(
     val players: List<PlayerStateData>,
     val turn: Int,
     val activePlayerIndex: Int,
+    val history: List<GameEventData> = emptyList(),
 )
 
 @Serializable
@@ -27,6 +29,9 @@ data class PlayerStateData(
     val sitesControlled: Int,
     val manaAvailable: Int,
     val affinity: Map<String, Int>,
+    val avatarName: String? = null,
+    val avatarImageUri: String? = null,
+    val pseudo: String? = null,
 )
 
 fun GameState.toData(): GameStateData = GameStateData(
@@ -34,18 +39,30 @@ fun GameState.toData(): GameStateData = GameStateData(
     players = listOf(player(PlayerId.One).toData(), player(PlayerId.Two).toData()),
     turn = turn,
     activePlayerIndex = if (activePlayer == PlayerId.One) 0 else 1,
+    history = history.map { it.toData() },
 )
 
-fun GameStateData.toDomain(): GameState = GameState(
-    config = GameConfig(startingLife = startingLife),
-    players = mapOf(
-        PlayerId.One to players[0].toDomain(),
-        PlayerId.Two to players[1].toDomain(),
-    ),
-    turn = turn,
-    activePlayer = if (activePlayerIndex == 0) PlayerId.One else PlayerId.Two,
-    history = emptyList(),
-)
+fun GameStateData.toDomain(): GameState {
+    val one = players[0].toDomain()
+    val two = players[1].toDomain()
+    return GameState(
+        // L'identité vit dans les joueurs ; on la reflète dans la config pour que l'undo (replay
+        // depuis initial(config)) reconstruise des joueurs identiques.
+        config = GameConfig(
+            startingLife = startingLife,
+            playerOne = one.identity(),
+            playerTwo = two.identity(),
+        ),
+        players = mapOf(PlayerId.One to one, PlayerId.Two to two),
+        turn = turn,
+        activePlayer = if (activePlayerIndex == 0) PlayerId.One else PlayerId.Two,
+        history = history.map { it.toDomain() },
+    )
+}
+
+private fun PlayerState.identity(): PlayerIdentity? =
+    if (avatarName == null && avatarImageUri == null && pseudo == null) null
+    else PlayerIdentity(avatarName, avatarImageUri, pseudo)
 
 private fun PlayerState.toData(): PlayerStateData = PlayerStateData(
     life = life,
@@ -53,6 +70,9 @@ private fun PlayerState.toData(): PlayerStateData = PlayerStateData(
     sitesControlled = sitesControlled,
     manaAvailable = manaAvailable,
     affinity = affinity.entries.associate { (element, value) -> element.name to value },
+    avatarName = avatarName,
+    avatarImageUri = avatarImageUri,
+    pseudo = pseudo,
 )
 
 private fun PlayerStateData.toDomain(): PlayerState = PlayerState(
@@ -61,4 +81,7 @@ private fun PlayerStateData.toDomain(): PlayerState = PlayerState(
     sitesControlled = sitesControlled,
     manaAvailable = manaAvailable,
     affinity = Element.entries.associateWith { element -> affinity[element.name] ?: 0 },
+    avatarName = avatarName,
+    avatarImageUri = avatarImageUri,
+    pseudo = pseudo,
 )

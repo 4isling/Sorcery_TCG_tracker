@@ -1,6 +1,7 @@
 package com.hayse.sorcery.feature.cards.di
 
 import com.hayse.sorcery.feature.cards.data.local.CardCatalogSeeder
+import com.hayse.sorcery.feature.cards.data.repository.CardImageResolver
 import com.hayse.sorcery.feature.cards.data.repository.CardRepositoryImpl
 import com.hayse.sorcery.feature.cards.domain.repository.CardRepository
 import com.hayse.sorcery.feature.cards.domain.usecase.GetCardDetailUseCase
@@ -13,7 +14,8 @@ import org.koin.dsl.module
 
 val cardsModule = module {
     single { CardCatalogSeeder(androidContext(), get()) }
-    single<CardRepository> { CardRepositoryImpl(dao = get(), collectionDao = get(), seeder = get()) }
+    single { CardImageResolver(androidContext()) }
+    single<CardRepository> { CardRepositoryImpl(dao = get(), collectionDao = get(), seeder = get(), imageResolver = get()) }
 
     factory { ObserveCardsUseCase(get()) }
     factory { GetCardDetailUseCase(get()) }

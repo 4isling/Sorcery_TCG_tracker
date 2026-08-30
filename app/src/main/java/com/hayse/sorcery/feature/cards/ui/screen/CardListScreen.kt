@@ -1,26 +1,24 @@
 package com.hayse.sorcery.feature.cards.ui.screen
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,17 +26,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
-import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.core.ui.ProvideCardList
+import com.hayse.sorcery.core.ui.ProvideTopBarSearch
+import com.hayse.sorcery.core.ui.composable.CardGridItem
+import com.hayse.sorcery.core.ui.composable.EmptyState
+import com.hayse.sorcery.core.ui.composable.LoadingState
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
+import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.cards.ui.viewmodel.CardBrowserViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -49,50 +50,59 @@ fun CardListScreen(
     viewModel: CardBrowserViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val spacing = LocalSpacing.current
+    val set = sorcerySetFromName(state.filter.setName)
 
-    Column(modifier = modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = state.filter.query.orEmpty(),
-            onValueChange = viewModel::setQuery,
-            label = { Text("Rechercher") },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-        )
+    ProvideTopBarSearch(
+        query = state.filter.query.orEmpty(),
+        onQueryChange = viewModel::setQuery,
+        placeholder = "Rechercher une carte",
+    )
+    ProvideCardList(state.cards.map { it.name })
 
-        OwnershipChips(
-            selected = state.filter.ownership,
-            onSelect = viewModel::setOwnership,
-        )
-
-        FilterBar(
-            selectedElement = state.filter.element,
-            selectedRarity = state.filter.rarity,
-            selectedType = state.filter.type,
-            selectedSet = state.filter.setName,
-            types = state.availableTypes,
-            sets = state.availableSets,
-            onElement = viewModel::setElement,
-            onRarity = viewModel::setRarity,
-            onType = viewModel::setType,
-            onSet = viewModel::setSet,
-        )
-
-        when {
-            state.loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-            state.cards.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("Aucune carte", style = MaterialTheme.typography.bodyLarge)
+    SorceryTheme(set = set) {
+        if (state.loading) {
+            LoadingState(modifier.fillMaxSize())
+            return@SorceryTheme
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 120.dp),
+            contentPadding = PaddingValues(spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm),
+            modifier = modifier.fillMaxSize(),
+        ) {
+            item(key = "__filters__", span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    OwnershipChips(
+                        selected = state.filter.ownership,
+                        onSelect = viewModel::setOwnership,
+                    )
+                    FilterBar(
+                        selectedElement = state.filter.element,
+                        selectedRarity = state.filter.rarity,
+                        selectedType = state.filter.type,
+                        selectedSet = state.filter.setName,
+                        types = state.availableTypes,
+                        sets = state.availableSets,
+                        onElement = viewModel::setElement,
+                        onRarity = viewModel::setRarity,
+                        onType = viewModel::setType,
+                        onSet = viewModel::setSet,
+                    )
+                }
             }
-            else -> LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 120.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
+            if (state.cards.isEmpty()) {
+                item(key = "__empty__", span = { GridItemSpan(maxLineSpan) }) {
+                    EmptyState(title = "Aucune carte")
+                }
+            } else {
                 items(state.cards, key = { it.name }) { card ->
-                    CardGridItem(card = card, onClick = { onCardClick(card.name) })
+                    CardGridItem(
+                        imageUri = card.imageUri,
+                        name = card.name,
+                        onClick = { onCardClick(card.name) },
+                    )
                 }
             }
         }
@@ -100,37 +110,14 @@ fun CardListScreen(
 }
 
 @Composable
-private fun CardGridItem(card: Card, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier.clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        AsyncImage(
-            model = card.imageUri,
-            contentDescription = card.name,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.72f),
-        )
-        Text(
-            text = card.name,
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-    }
-}
-
-@Composable
 private fun OwnershipChips(selected: Ownership, onSelect: (Ownership) -> Unit) {
+    val spacing = LocalSpacing.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = spacing.md),
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         Ownership.entries.forEach { ownership ->
             FilterChip(
@@ -162,8 +149,12 @@ private fun FilterBar(
     onType: (String?) -> Unit,
     onSet: (String?) -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     var expanded by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        modifier = Modifier.animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(spacing.xs),
+    ) {
         TextButton(onClick = { expanded = !expanded }) {
             Text(if (expanded) "Masquer les filtres avancés" else "Filtres avancés")
         }
@@ -172,8 +163,8 @@ private fun FilterBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             Element.entries.forEach { element ->
                 FilterChip(
@@ -187,8 +178,23 @@ private fun FilterBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+        ) {
+            types.forEach { type ->
+                FilterChip(
+                    selected = selectedType == type,
+                    onClick = { onType(if (selectedType == type) null else type) },
+                    label = { Text(type) },
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             Rarity.entries.forEach { rarity ->
                 FilterChip(
@@ -197,12 +203,6 @@ private fun FilterBar(
                     label = { Text(rarity.name) },
                 )
             }
-            DropdownFilter(
-                label = selectedType ?: "Type",
-                options = types,
-                selected = selectedType,
-                onSelect = onType,
-            )
             DropdownFilter(
                 label = selectedSet ?: "Set",
                 options = sets,

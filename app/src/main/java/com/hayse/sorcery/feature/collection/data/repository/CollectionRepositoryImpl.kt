@@ -2,6 +2,7 @@ package com.hayse.sorcery.feature.collection.data.repository
 
 import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
+import com.hayse.sorcery.feature.cards.data.repository.CardImageResolver
 import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.collection.data.csv.CuriosaCsvParser
 import com.hayse.sorcery.feature.collection.data.local.dao.CollectionDao
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 class CollectionRepositoryImpl(
     private val collectionDao: CollectionDao,
     private val cardDao: CardDao,
+    private val imageResolver: CardImageResolver,
 ) : CollectionRepository {
 
     private fun observeAllCards() = cardDao.observeCards(null, null, null, null, null)
@@ -36,7 +38,7 @@ class CollectionRepositoryImpl(
             ),
             collectionDao.observeEntries(),
         ) { cards, entries ->
-            CollectionComputations.collectionItems(cards, entries, filter.ownership)
+            CollectionComputations.collectionItems(cards, entries, filter.ownership, imageResolver::imageUriForSlugs)
         }
 
     override fun observeOwnedForCard(cardName: String): Flow<List<OwnedCopy>> =
@@ -51,12 +53,12 @@ class CollectionRepositoryImpl(
 
     override fun observeSurplus(): Flow<List<SurplusCard>> =
         combine(observeAllCards(), collectionDao.observeEntries()) { cards, entries ->
-            CollectionComputations.surplus(cards, entries)
+            CollectionComputations.surplus(cards, entries, imageResolver::imageUriForSlugs)
         }
 
     override fun observeMissing(setName: String): Flow<List<Card>> =
         combine(observeAllCards(), collectionDao.observeEntries()) { cards, entries ->
-            CollectionComputations.missing(cards, entries, setName)
+            CollectionComputations.missing(cards, entries, setName, imageResolver::imageUriForSlugs)
         }
 
     override suspend fun setQuantity(slug: String, finish: String, quantity: Int) {

@@ -13,15 +13,22 @@ data class GameState(
         copy(players = players + (id to transform(player(id))))
 
     companion object {
-        fun initial(config: GameConfig = GameConfig()): GameState {
-            val start = PlayerState(life = config.startingLife)
-            return GameState(
-                config = config,
-                players = mapOf(PlayerId.One to start, PlayerId.Two to start),
-                turn = 1,
-                activePlayer = PlayerId.One,
-                history = emptyList(),
-            )
-        }
+        fun initial(config: GameConfig = GameConfig()): GameState = GameState(
+            config = config,
+            players = mapOf(
+                PlayerId.One to newPlayer(config.startingLife, config.playerOne),
+                PlayerId.Two to newPlayer(config.startingLife, config.playerTwo),
+            ),
+            turn = 1,
+            activePlayer = PlayerId.One,
+            history = emptyList(),
+        )
+
+        private fun newPlayer(life: Int, identity: PlayerIdentity?): PlayerState = PlayerState(
+            life = life,
+            avatarName = identity?.avatarName,
+            avatarImageUri = identity?.avatarImageUri,
+            pseudo = identity?.pseudo,
+        )
     }
 }

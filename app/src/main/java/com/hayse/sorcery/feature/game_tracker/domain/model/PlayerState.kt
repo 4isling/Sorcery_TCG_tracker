@@ -8,4 +8,7 @@ data class PlayerState(
     val sitesControlled: Int = 0,
     val manaAvailable: Int = 0,
     val affinity: Map<Element, Int> = Element.entries.associateWith { 0 },
+    val avatarName: String? = null,
+    val avatarImageUri: String? = null,
+    val pseudo: String? = null,
 )

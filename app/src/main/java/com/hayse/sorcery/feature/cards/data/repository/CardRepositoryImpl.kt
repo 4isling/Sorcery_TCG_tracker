@@ -16,6 +16,7 @@ class CardRepositoryImpl(
     private val dao: CardDao,
     private val collectionDao: CollectionDao,
     private val seeder: CardCatalogSeeder,
+    private val imageResolver: CardImageResolver,
 ) : CardRepository {
 
     override suspend fun ensureSeeded() = seeder.ensureSeeded()
@@ -32,10 +33,11 @@ class CardRepositoryImpl(
             collectionDao.observeEntries(),
         ) { rows, entries ->
             if (filter.ownership == Ownership.All) {
-                rows.map { it.toCard() }
+                rows.map { it.toCard(imageResolver::imageUriForSlugs) }
             } else {
                 val quantityBySlug = entries.associate { it.printingSlug to it.quantity }
-                rows.filter { keepByOwnership(it, quantityBySlug, filter.ownership) }.map { it.toCard() }
+                rows.filter { keepByOwnership(it, quantityBySlug, filter.ownership) }
+                    .map { it.toCard(imageResolver::imageUriForSlugs) }
             }
         }
 
@@ -50,14 +52,14 @@ class CardRepositoryImpl(
             Ownership.Owned -> totalOwned > 0
             Ownership.Missing -> totalOwned == 0
             Ownership.Surplus -> {
-                val max = cwp.toCard().rarity?.maxCopies ?: Int.MAX_VALUE
+                val max = cwp.toCard(imageResolver::imageUriForSlugs).rarity?.maxCopies ?: Int.MAX_VALUE
                 totalOwned > max
             }
         }
     }
 
     override suspend fun getCard(name: String): CardDetail? =
-        dao.getCardWithPrintings(name)?.toDetail()
+        dao.getCardWithPrintings(name)?.toDetail(imageResolver::imageUriForSlugs)
 
     override suspend fun availableTypes(): List<String> = dao.distinctTypes()
 

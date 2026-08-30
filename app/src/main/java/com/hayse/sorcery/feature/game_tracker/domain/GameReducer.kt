@@ -50,6 +50,11 @@ object GameReducer {
                 .copy(turn = state.turn + 1, activePlayer = next)
                 .withPlayer(next) { it.copy(manaAvailable = it.sitesControlled) }
         }
+
+        // Les résultats sont déjà tirés et portés par l'événement : no-op déterministe au replay.
+        is GameEvent.DiceRoll -> state
+
+        is GameEvent.FirstPlayerRoll -> state.copy(activePlayer = event.chosen)
     }
 
     private fun applyDamage(player: PlayerState, amount: Int): PlayerState = when (player.avatarStatus) {

@@ -1,3 +1,10 @@
 <resources>
     <style name="Theme.Sorcery" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Écran de démarrage (API SplashScreen, compat via core-splashscreen). -->
+    <style name="Theme.Sorcery.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Sorcery</item>
+    </style>
 </resources>
