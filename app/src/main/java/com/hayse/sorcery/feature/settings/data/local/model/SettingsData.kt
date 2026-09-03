@@ -11,4 +11,8 @@ data class SettingsData(
     val themeMode: String = "SYSTEM",
     val language: String = "SYSTEM",
     val themeSet: String? = null,
+    val skinMode: String = "FIXED",
+    val socialEnabled: Boolean = true,
+    val pseudo: String = "",
+    val deviceId: String = "",
 )

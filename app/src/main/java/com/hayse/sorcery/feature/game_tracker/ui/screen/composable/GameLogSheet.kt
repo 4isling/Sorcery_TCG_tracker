@@ -14,7 +14,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.feature.game_tracker.domain.model.DiceRollPurpose
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameEvent
@@ -36,9 +38,9 @@ fun GameLogSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Journal de la partie", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.game_log_title), style = MaterialTheme.typography.titleLarge)
             if (game.history.isEmpty()) {
-                Text("Aucune action pour l'instant.", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.game_log_empty), style = MaterialTheme.typography.bodyMedium)
             } else {
                 LazyColumn(
                     modifier = Modifier.heightIn(max = 400.dp),
@@ -58,32 +60,50 @@ fun GameLogSheet(
     }
 }
 
+@Composable
 private fun GameState.playerLabel(id: PlayerId): String {
     val pseudo = player(id).pseudo?.takeIf(String::isNotBlank)
-    return pseudo ?: if (id == PlayerId.One) "Joueur 1" else "Joueur 2"
-}
-
-private fun Element.french(): String = when (this) {
-    Element.Air -> "Air"
-    Element.Earth -> "Terre"
-    Element.Fire -> "Feu"
-    Element.Water -> "Eau"
-}
-
-private fun GameEvent.frenchLabel(game: GameState): String = when (this) {
-    is GameEvent.Damage -> "${game.playerLabel(player)} subit $amount dégât(s)"
-    is GameEvent.LifeLoss -> "${game.playerLabel(player)} perd $amount vie"
-    is GameEvent.LifeGain -> "${game.playerLabel(player)} gagne $amount vie"
-    is GameEvent.ManaAdjust -> "${game.playerLabel(player)} : mana ${signed(delta)}"
-    is GameEvent.SiteCountChange -> "${game.playerLabel(player)} : sites ${signed(delta)}"
-    is GameEvent.AffinityChange -> "${game.playerLabel(player)} : affinité ${element.french()} ${signed(delta)}"
-    GameEvent.NewTurn -> "Nouveau tour"
-    is GameEvent.DiceRoll -> if (purpose == DiceRollPurpose.Harbinger) {
-        "Harbinger 3d20 : ${results.joinToString(", ")}"
+    return pseudo ?: if (id == PlayerId.One) {
+        stringResource(R.string.game_player_one)
     } else {
-        "Jet ${results.size}d$faces : ${results.joinToString(", ")} (total ${results.sum()})"
+        stringResource(R.string.game_player_two)
     }
-    is GameEvent.FirstPlayerRoll -> "Premier joueur : ${game.playerLabel(chosen)}"
+}
+
+@Composable
+private fun Element.french(): String = when (this) {
+    Element.Air -> stringResource(R.string.game_element_air)
+    Element.Earth -> stringResource(R.string.game_element_earth)
+    Element.Fire -> stringResource(R.string.game_element_fire)
+    Element.Water -> stringResource(R.string.game_element_water)
+}
+
+@Composable
+private fun GameEvent.frenchLabel(game: GameState): String = when (this) {
+    is GameEvent.Damage -> stringResource(R.string.game_event_damage, game.playerLabel(player), amount)
+    is GameEvent.LifeLoss -> stringResource(R.string.game_event_life_loss, game.playerLabel(player), amount)
+    is GameEvent.LifeGain -> stringResource(R.string.game_event_life_gain, game.playerLabel(player), amount)
+    is GameEvent.ManaAdjust -> stringResource(R.string.game_event_mana, game.playerLabel(player), signed(delta))
+    is GameEvent.SiteCountChange -> stringResource(R.string.game_event_sites, game.playerLabel(player), signed(delta))
+    is GameEvent.AffinityChange -> stringResource(
+        R.string.game_event_affinity,
+        game.playerLabel(player),
+        element.french(),
+        signed(delta),
+    )
+    GameEvent.NewTurn -> stringResource(R.string.game_event_new_turn)
+    is GameEvent.DiceRoll -> if (purpose == DiceRollPurpose.Harbinger) {
+        stringResource(R.string.game_event_harbinger_roll, results.joinToString(", "))
+    } else {
+        stringResource(
+            R.string.game_event_dice_roll,
+            results.size,
+            faces,
+            results.joinToString(", "),
+            results.sum(),
+        )
+    }
+    is GameEvent.FirstPlayerRoll -> stringResource(R.string.game_event_first_player, game.playerLabel(chosen))
 }
 
 private fun signed(value: Int): String = if (value >= 0) "+$value" else "$value"

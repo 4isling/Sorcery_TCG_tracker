@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.res.stringResource
+import com.hayse.sorcery.R
 
 /**
  * État partagé de la recherche de la barre supérieure.
@@ -38,7 +40,7 @@ val LocalTopBarSearch = staticCompositionLocalOf { TopBarSearchState() }
 fun ProvideTopBarSearch(
     query: String,
     onQueryChange: (String) -> Unit,
-    placeholder: String = "Rechercher",
+    placeholder: String = stringResource(R.string.core_search),
 ) {
     val state = LocalTopBarSearch.current
     val owner = remember { Any() }

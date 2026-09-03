@@ -26,15 +26,18 @@ object DeckComputations {
     ): DeckDetail {
         val ownedByCard = ownedByCard(allCards, entries)
         val cardByName = allCards.associate { it.card.name to it.toCard(imageUriForSlugs) }
+        val setByName = allCards.associate { it.card.name to it.printings.firstOrNull()?.setName }
         val deckEntries = deckCards.mapNotNull { dc ->
             val card = cardByName[dc.cardName] ?: return@mapNotNull null
             DeckEntry(card = card, quantity = dc.quantity, owned = ownedByCard[dc.cardName] ?: 0)
         }.sortedBy { it.card.name }
+        val avatarName = deckEntries.firstOrNull { deckSectionOf(it.card.type) == DeckSection.Avatar }?.card?.name
         return DeckDetail(
             id = deck.id,
             name = deck.name,
             format = DeckFormat.fromId(deck.format),
             entries = deckEntries,
+            avatarSetName = avatarName?.let { setByName[it] },
         )
     }
 
@@ -47,6 +50,7 @@ object DeckComputations {
     ): List<DeckSummary> {
         val ownedByCard = ownedByCard(allCards, entries)
         val cardByName = allCards.associate { it.card.name to it.toCard(imageUriForSlugs) }
+        val setByName = allCards.associate { it.card.name to it.printings.firstOrNull()?.setName }
         val byDeck = allDeckCards.groupBy { it.deckId }
         return decks.map { deck ->
             val format = DeckFormat.fromId(deck.format)
@@ -60,6 +64,7 @@ object DeckComputations {
                 name = deck.name,
                 format = format,
                 avatarName = avatar?.card?.name,
+                avatarSetName = avatar?.card?.name?.let { setByName[it] },
                 avatarImageUri = avatar?.card?.imageUri,
                 spellbookCount = deckEntries.filter { deckSectionOf(it.card.type) == DeckSection.Spellbook }.sumOf { it.quantity },
                 atlasCount = deckEntries.filter { deckSectionOf(it.card.type) == DeckSection.Atlas }.sumOf { it.quantity },

@@ -63,6 +63,7 @@ class DeckEditorViewModel(
                             loading = false,
                             name = detail.name,
                             format = detail.format,
+                            avatarSetName = detail.avatarSetName,
                             avatar = detail.avatar,
                             spellbook = detail.spellbook,
                             atlas = detail.atlas,

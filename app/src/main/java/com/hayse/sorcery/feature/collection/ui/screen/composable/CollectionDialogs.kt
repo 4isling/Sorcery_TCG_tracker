@@ -10,8 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.R
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
 
 /** Choix Remplacer / Fusionner avant un import CSV. */
@@ -23,10 +24,10 @@ fun ImportModeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Importer la collection") },
-        text = { Text("Remplacer la collection actuelle ou fusionner l'import avec l'existant ?") },
-        confirmButton = { TextButton(onClick = onReplace) { Text("Remplacer") } },
-        dismissButton = { TextButton(onClick = onMerge) { Text("Fusionner") } },
+        title = { Text(stringResource(R.string.collection_import_mode_title)) },
+        text = { Text(stringResource(R.string.collection_import_mode_message)) },
+        confirmButton = { TextButton(onClick = onReplace) { Text(stringResource(R.string.collection_replace)) } },
+        dismissButton = { TextButton(onClick = onMerge) { Text(stringResource(R.string.collection_merge)) } },
     )
 }
 
@@ -35,57 +36,39 @@ fun ImportModeDialog(
 fun ImportReportDialog(report: ImportReport, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import terminé") },
+        title = { Text(stringResource(R.string.collection_import_done_title)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("${report.matched} ligne(s) importée(s).")
+                Text(stringResource(R.string.collection_import_matched, report.matched))
                 if (report.ambiguous.isNotEmpty()) {
                     Text(
-                        "${report.ambiguous.size} ligne(s) ambiguë(s) (1er slug retenu) :",
+                        stringResource(R.string.collection_import_ambiguous, report.ambiguous.size),
                         style = MaterialTheme.typography.labelLarge,
                     )
-                    report.ambiguous.take(20).forEach { Text("• ${it.cardName} (${it.set}, ${it.finish})") }
+                    report.ambiguous.take(20).forEach {
+                        Text(stringResource(R.string.collection_import_line_detail, it.cardName, it.set, it.finish))
+                    }
                 }
                 if (report.unmatched.isNotEmpty()) {
                     Text(
-                        "${report.unmatched.size} ligne(s) sans correspondance :",
+                        stringResource(R.string.collection_import_unmatched, report.unmatched.size),
                         style = MaterialTheme.typography.labelLarge,
                     )
-                    report.unmatched.take(20).forEach { Text("• ${it.cardName} (${it.set}, ${it.finish})") }
+                    report.unmatched.take(20).forEach {
+                        Text(stringResource(R.string.collection_import_line_detail, it.cardName, it.set, it.finish))
+                    }
                 }
                 if (report.invalid.isNotEmpty()) {
                     Text(
-                        "${report.invalid.size} ligne(s) invalide(s).",
+                        stringResource(R.string.collection_import_invalid, report.invalid.size),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
-    )
-}
-
-/** Cartes manquantes d'un set (issu de la vue Complétion). */
-@Composable
-fun MissingDialog(setName: String, missing: List<Card>, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Manquantes — $setName") },
-        text = {
-            if (missing.isEmpty()) {
-                Text("Set complété !")
-            } else {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    missing.forEach { Text("• ${it.name}") }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.collection_ok)) } },
     )
 }

@@ -3,6 +3,7 @@ package com.hayse.sorcery.feature.game_tracker.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.feature.cards.domain.repository.CardRepository
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameConfig
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameRecord
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
@@ -34,6 +35,7 @@ class GameTrackerViewModel(
     private val repository: GameSessionRepository,
     private val gameHistory: GameHistoryRepository,
     private val playerPrefs: PlayerPrefsRepository,
+    private val cardRepository: CardRepository,
     private val applyDamage: ApplyDamageUseCase,
     private val applyLifeLoss: ApplyLifeLossUseCase,
     private val applyLifeGain: ApplyLifeGainUseCase,
@@ -60,8 +62,23 @@ class GameTrackerViewModel(
                 loading = false,
                 defaultOwnerPseudo = ownerPseudo,
             )
+            refreshAvatarSets()
         }
     }
+
+    /** Résout le set de l'avatar de chaque joueur (change uniquement au démarrage d'une partie). */
+    private fun refreshAvatarSets() {
+        val game = _state.value.game
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                playerOneAvatarSet = avatarSetName(game?.player(PlayerId.One)?.avatarName),
+                playerTwoAvatarSet = avatarSetName(game?.player(PlayerId.Two)?.avatarName),
+            )
+        }
+    }
+
+    private suspend fun avatarSetName(avatarName: String?): String? =
+        avatarName?.let { cardRepository.getCard(it)?.printings?.firstOrNull()?.setName }
 
     fun newGame(config: GameConfig = GameConfig()) {
         config.playerOne?.pseudo?.let { pseudo ->
@@ -69,6 +86,7 @@ class GameTrackerViewModel(
             _state.value = _state.value.copy(defaultOwnerPseudo = pseudo)
         }
         commit(resetGame(config))
+        refreshAvatarSets()
     }
 
     fun endGame() {

@@ -27,8 +27,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
@@ -56,7 +58,7 @@ fun CardListScreen(
     ProvideTopBarSearch(
         query = state.filter.query.orEmpty(),
         onQueryChange = viewModel::setQuery,
-        placeholder = "Rechercher une carte",
+        placeholder = stringResource(R.string.cards_search_placeholder),
     )
     ProvideCardList(state.cards.map { it.name })
 
@@ -94,7 +96,7 @@ fun CardListScreen(
             }
             if (state.cards.isEmpty()) {
                 item(key = "__empty__", span = { GridItemSpan(maxLineSpan) }) {
-                    EmptyState(title = "Aucune carte")
+                    EmptyState(title = stringResource(R.string.cards_empty))
                 }
             } else {
                 items(state.cards, key = { it.name }) { card ->
@@ -129,11 +131,12 @@ private fun OwnershipChips(selected: Ownership, onSelect: (Ownership) -> Unit) {
     }
 }
 
+@Composable
 private fun ownershipLabel(ownership: Ownership): String = when (ownership) {
-    Ownership.All -> "Toutes"
-    Ownership.Owned -> "Possédées"
-    Ownership.Missing -> "Manquantes"
-    Ownership.Surplus -> "Surplus"
+    Ownership.All -> stringResource(R.string.cards_ownership_all)
+    Ownership.Owned -> stringResource(R.string.cards_ownership_owned)
+    Ownership.Missing -> stringResource(R.string.cards_ownership_missing)
+    Ownership.Surplus -> stringResource(R.string.cards_ownership_surplus)
 }
 
 @Composable
@@ -156,7 +159,7 @@ private fun FilterBar(
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
     ) {
         TextButton(onClick = { expanded = !expanded }) {
-            Text(if (expanded) "Masquer les filtres avancés" else "Filtres avancés")
+            Text(if (expanded) stringResource(R.string.cards_hide_advanced_filters) else stringResource(R.string.cards_advanced_filters))
         }
         if (!expanded) return@Column
         Row(
@@ -204,7 +207,7 @@ private fun FilterBar(
                 )
             }
             DropdownFilter(
-                label = selectedSet ?: "Set",
+                label = selectedSet ?: stringResource(R.string.cards_filter_set),
                 options = sets,
                 selected = selectedSet,
                 onSelect = onSet,
@@ -225,7 +228,7 @@ private fun DropdownFilter(
         OutlinedButton(onClick = { expanded = true }) { Text(label) }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
-                text = { Text("Tous") },
+                text = { Text(stringResource(R.string.cards_filter_all)) },
                 onClick = { onSelect(null); expanded = false },
             )
             options.forEach { option ->

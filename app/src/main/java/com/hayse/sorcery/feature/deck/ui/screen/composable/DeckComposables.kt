@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -30,16 +29,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedCard
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedSectionTitle
 import com.hayse.sorcery.feature.deck.domain.model.DeckCatalogFilter
 import com.hayse.sorcery.feature.deck.domain.model.DeckEntry
 import com.hayse.sorcery.feature.deck.domain.model.DeckIssue
+import com.hayse.sorcery.feature.deck.domain.model.DeckIssueMessage
 import com.hayse.sorcery.feature.deck.domain.model.DeckIssueSeverity
 import com.hayse.sorcery.feature.deck.domain.model.DeckSection
 import com.hayse.sorcery.feature.deck.domain.model.DeckSummary
@@ -52,7 +56,7 @@ fun DeckSummaryRow(
     onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    SkinnedCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -74,17 +78,22 @@ fun DeckSummaryRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = summary.avatarName ?: "Sans Avatar",
+                    text = summary.avatarName ?: stringResource(R.string.deck_no_avatar),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${summary.format.label} · ${summary.spellbookCount} sorts · ${summary.atlasCount} sites",
+                    text = stringResource(
+                        R.string.deck_summary_counts,
+                        summary.format.label,
+                        summary.spellbookCount,
+                        summary.atlasCount,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = if (summary.isLegal) "Légal" else "Incomplet",
+                    text = if (summary.isLegal) stringResource(R.string.deck_legal) else stringResource(R.string.deck_incomplete),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (summary.isLegal) {
                         MaterialTheme.colorScheme.primary
@@ -94,7 +103,7 @@ fun DeckSummaryRow(
                 )
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Supprimer")
+                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.deck_delete))
             }
         }
     }
@@ -112,9 +121,10 @@ fun SectionHeader(title: String, count: Int, minimum: Int? = null, onClick: (() 
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        SkinnedSectionTitle(
             text = if (onClick != null) "$title +" else title,
             style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = label,
@@ -135,7 +145,7 @@ fun DeckEntryRow(
     onClick: () -> Unit,
     onAdjust: (cardName: String, delta: Int) -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    SkinnedCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -173,13 +183,19 @@ private fun OwnershipLabel(entry: DeckEntry) {
     val rarity = entry.card.rarity?.name?.let { " · $it" }.orEmpty()
     if (entry.missing > 0) {
         Text(
-            text = "Possédées ${entry.owned}/${entry.quantity} · ${entry.missing} à acquérir$rarity",
+            text = stringResource(
+                R.string.deck_owned_missing,
+                entry.owned,
+                entry.quantity,
+                entry.missing,
+                rarity,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
         )
     } else {
         Text(
-            text = "Possédées ${entry.owned}$rarity",
+            text = stringResource(R.string.deck_owned, entry.owned, rarity),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -195,7 +211,7 @@ fun ValidationSummary(validation: DeckValidation, onFixIssue: (DeckIssue) -> Uni
     ) {
         if (validation.isLegal) {
             Text(
-                text = "Deck légal",
+                text = stringResource(R.string.deck_valid),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -253,7 +269,13 @@ fun DeckFilterBar(
             }
         }
         TextButton(onClick = { expanded = !expanded }) {
-            Text(if (expanded) "Masquer les filtres avancés" else "Filtres avancés")
+            Text(
+                if (expanded) {
+                    stringResource(R.string.deck_hide_advanced_filters)
+                } else {
+                    stringResource(R.string.deck_advanced_filters)
+                },
+            )
         }
         if (expanded) {
             ChipRow {
@@ -273,7 +295,7 @@ fun DeckFilterBar(
                         label = { Text(entry.name) },
                     )
                 }
-                DropdownFilter(filter.setName ?: "Set", sets, onSet)
+                DropdownFilter(filter.setName ?: stringResource(R.string.deck_set), sets, onSet)
             }
         }
     }
@@ -297,7 +319,7 @@ private fun DropdownFilter(label: String, options: List<String>, onSelect: (Stri
     Box {
         OutlinedButton(onClick = { expanded = true }) { Text(label) }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Tous") }, onClick = { onSelect(null); expanded = false })
+            DropdownMenuItem(text = { Text(stringResource(R.string.deck_all)) }, onClick = { onSelect(null); expanded = false })
             options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option) },
@@ -308,24 +330,36 @@ private fun DropdownFilter(label: String, options: List<String>, onSelect: (Stri
     }
 }
 
+@Composable
 private fun ownershipLabel(ownership: Ownership): String = when (ownership) {
-    Ownership.All -> "Toutes"
-    Ownership.Owned -> "Possédées"
-    Ownership.Missing -> "Manquantes"
-    Ownership.Surplus -> "Surplus"
+    Ownership.All -> stringResource(R.string.deck_ownership_all)
+    Ownership.Owned -> stringResource(R.string.deck_ownership_owned)
+    Ownership.Missing -> stringResource(R.string.deck_ownership_missing)
+    Ownership.Surplus -> stringResource(R.string.deck_ownership_surplus)
 }
 
+@Composable
 private fun sectionLabel(section: DeckSection): String = when (section) {
-    DeckSection.Avatar -> "Avatar"
-    DeckSection.Spellbook -> "Grimoire"
-    DeckSection.Atlas -> "Atlas"
+    DeckSection.Avatar -> stringResource(R.string.deck_section_avatar)
+    DeckSection.Spellbook -> stringResource(R.string.deck_section_spellbook)
+    DeckSection.Atlas -> stringResource(R.string.deck_section_atlas)
+}
+
+@Composable
+private fun DeckIssueMessage.text(): String = when (this) {
+    DeckIssueMessage.AvatarRequired -> stringResource(R.string.deck_issue_avatar_required)
+    is DeckIssueMessage.TooManyAvatars -> stringResource(R.string.deck_issue_too_many_avatars, count)
+    is DeckIssueMessage.SpellbookTooSmall -> stringResource(R.string.deck_issue_spellbook_min, count, min)
+    is DeckIssueMessage.AtlasTooSmall -> stringResource(R.string.deck_issue_atlas_min, count, min)
+    is DeckIssueMessage.BannedRarity -> stringResource(R.string.deck_issue_banned_rarity, cardName, rarity)
+    is DeckIssueMessage.TooManyCopies -> stringResource(R.string.deck_issue_copies_max, cardName, quantity, limit)
 }
 
 @Composable
 private fun IssueLine(issue: DeckIssue, onFixIssue: (DeckIssue) -> Unit) {
     val suffix = if (issue.isFixable) " ›" else ""
     Text(
-        text = "• ${issue.message}$suffix",
+        text = "• ${issue.message.text()}$suffix",
         style = MaterialTheme.typography.bodySmall,
         color = if (issue.severity == DeckIssueSeverity.Error) {
             MaterialTheme.colorScheme.error

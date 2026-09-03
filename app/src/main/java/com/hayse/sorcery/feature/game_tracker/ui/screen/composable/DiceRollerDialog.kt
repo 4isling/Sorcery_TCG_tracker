@@ -21,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.feature.game_tracker.domain.model.DiceRollPurpose
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameEvent
@@ -46,13 +48,13 @@ fun DiceRollerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Lancer de dés") },
+        title = { Text(stringResource(R.string.game_dice_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Nombre de dés", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.game_dice_count), style = MaterialTheme.typography.titleSmall)
                 CounterStepper(value = count, onValueChange = { count = it }, min = 1, max = 20)
 
-                Text("Faces par dé", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.game_dice_faces), style = MaterialTheme.typography.titleSmall)
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -68,14 +70,14 @@ fun DiceRollerDialog(
                 CounterStepper(value = faces, onValueChange = { faces = it }, min = 2, max = 100)
 
                 Button(onClick = { onRollDice(count, faces) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Lancer ${count}d$faces")
+                    Text(stringResource(R.string.game_dice_roll_action, count, faces))
                 }
                 OutlinedButton(onClick = onRollFirstPlayer, modifier = Modifier.fillMaxWidth()) {
-                    Text("Déterminer le premier joueur")
+                    Text(stringResource(R.string.game_dice_first_player_action))
                 }
                 if (harbingerAvailable) {
                     OutlinedButton(onClick = onRollHarbinger, modifier = Modifier.fillMaxWidth()) {
-                        Text("Harbinger : lancer 3d20")
+                        Text(stringResource(R.string.game_dice_harbinger_action))
                     }
                 }
 
@@ -86,7 +88,7 @@ fun DiceRollerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Fermer") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.game_close)) }
         },
     )
 }
@@ -107,14 +109,21 @@ private fun LastRollResult(event: GameEvent) {
                 fontWeight = FontWeight.Bold,
             )
             if (event.purpose != DiceRollPurpose.Harbinger && event.results.size > 1) {
-                Text("Total : ${event.results.sum()}", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.game_dice_total, event.results.sum()),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
 
         is GameEvent.FirstPlayerRoll -> {
-            Text("Premier joueur", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.game_dice_first_player), style = MaterialTheme.typography.titleSmall)
             Text(
-                text = "Joueur ${if (event.chosen.name == "One") "1" else "2"} commence",
+                text = if (event.chosen.name == "One") {
+                    stringResource(R.string.game_dice_player_one_starts)
+                } else {
+                    stringResource(R.string.game_dice_player_two_starts)
+                },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )

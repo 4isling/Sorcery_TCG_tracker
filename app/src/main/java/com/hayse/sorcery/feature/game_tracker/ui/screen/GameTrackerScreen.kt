@@ -37,13 +37,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
 import com.hayse.sorcery.core.ui.composable.LoadingState
 import com.hayse.sorcery.core.ui.isExpanded
 import com.hayse.sorcery.core.ui.composable.SorceryDialog
+import com.hayse.sorcery.core.ui.theme.LocalSetSkin
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.core.ui.theme.skin.Skins
+import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.game_tracker.ui.screen.composable.DiceRollerDialog
@@ -93,6 +100,8 @@ fun GameTrackerScreen(
             GameContent(
                 game = state.game!!,
                 viewModel = viewModel,
+                playerOneSet = state.playerOneAvatarSet,
+                playerTwoSet = state.playerTwoAvatarSet,
                 onNewGame = onNewGame,
                 modifier = modifier,
             )
@@ -107,8 +116,8 @@ private fun NoGameCta(modifier: Modifier = Modifier, onNewGame: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.md),
         ) {
-            Text("Aucune partie en cours", style = MaterialTheme.typography.titleLarge)
-            Button(onClick = onNewGame) { Text("Nouvelle partie") }
+            Text(stringResource(R.string.game_no_game), style = MaterialTheme.typography.titleLarge)
+            Button(onClick = onNewGame) { Text(stringResource(R.string.game_new_game)) }
         }
     }
 }
@@ -117,6 +126,8 @@ private fun NoGameCta(modifier: Modifier = Modifier, onNewGame: () -> Unit) {
 private fun GameContent(
     game: GameState,
     viewModel: GameTrackerViewModel,
+    playerOneSet: String?,
+    playerTwoSet: String?,
     onNewGame: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -137,11 +148,11 @@ private fun GameContent(
         Column(modifier = modifier.fillMaxSize()) {
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 PlayerScrollBox(modifier = Modifier.weight(1f)) {
-                    OpponentPanel(game, viewModel)
+                    OpponentPanel(game, viewModel, playerTwoSet)
                 }
                 VerticalDivider()
                 PlayerScrollBox(modifier = Modifier.weight(1f)) {
-                    SelfPanel(game, viewModel)
+                    SelfPanel(game, viewModel, playerOneSet)
                 }
             }
             controlBar()
@@ -150,11 +161,11 @@ private fun GameContent(
         // Téléphone / portrait : vis-à-vis vertical, adversaire retourné à 180°, barre au centre.
         Column(modifier = modifier.fillMaxSize()) {
             PlayerScrollBox(modifier = Modifier.weight(1f)) {
-                OpponentPanel(game, viewModel, modifier = Modifier.rotate(180f))
+                OpponentPanel(game, viewModel, playerTwoSet, modifier = Modifier.rotate(180f))
             }
             controlBar()
             PlayerScrollBox(modifier = Modifier.weight(1f)) {
-                SelfPanel(game, viewModel)
+                SelfPanel(game, viewModel, playerOneSet)
             }
         }
     }
@@ -180,34 +191,58 @@ private fun RowScope.PlayerScrollBox(modifier: Modifier = Modifier, content: @Co
     ) { content() }
 }
 
+/** Applique l'identité visuelle du set de l'avatar au panneau (décoration neutre en mode Off). */
 @Composable
-private fun OpponentPanel(game: GameState, viewModel: GameTrackerViewModel, modifier: Modifier = Modifier) {
-    PlayerPanel(
-        title = "Joueur 2",
-        isActive = game.activePlayer == PlayerId.Two,
-        player = game.player(PlayerId.Two),
-        onDamage = { viewModel.damage(PlayerId.Two, it) },
-        onLifeGain = { viewModel.lifeGain(PlayerId.Two, it) },
-        onManaDelta = { viewModel.manaDelta(PlayerId.Two, it) },
-        onSiteDelta = { viewModel.siteDelta(PlayerId.Two, it) },
-        onAffinityDelta = { element, delta -> viewModel.affinityDelta(PlayerId.Two, element, delta) },
-        modifier = modifier,
-    )
+private fun SetSkinnedPanel(setName: String?, content: @Composable () -> Unit) {
+    val skinEnabled = LocalSetSkin.current != Skins.Default
+    val set = sorcerySetFromName(setName)
+    SorceryTheme(set = set, skin = if (skinEnabled) skinFor(set) else Skins.Default) {
+        content()
+    }
 }
 
 @Composable
-private fun SelfPanel(game: GameState, viewModel: GameTrackerViewModel, modifier: Modifier = Modifier) {
-    PlayerPanel(
-        title = "Joueur 1",
-        isActive = game.activePlayer == PlayerId.One,
-        player = game.player(PlayerId.One),
-        onDamage = { viewModel.damage(PlayerId.One, it) },
-        onLifeGain = { viewModel.lifeGain(PlayerId.One, it) },
-        onManaDelta = { viewModel.manaDelta(PlayerId.One, it) },
-        onSiteDelta = { viewModel.siteDelta(PlayerId.One, it) },
-        onAffinityDelta = { element, delta -> viewModel.affinityDelta(PlayerId.One, element, delta) },
-        modifier = modifier,
-    )
+private fun OpponentPanel(
+    game: GameState,
+    viewModel: GameTrackerViewModel,
+    setName: String?,
+    modifier: Modifier = Modifier,
+) {
+    SetSkinnedPanel(setName) {
+        PlayerPanel(
+            title = stringResource(R.string.game_player_two),
+            isActive = game.activePlayer == PlayerId.Two,
+            player = game.player(PlayerId.Two),
+            onDamage = { viewModel.damage(PlayerId.Two, it) },
+            onLifeGain = { viewModel.lifeGain(PlayerId.Two, it) },
+            onManaDelta = { viewModel.manaDelta(PlayerId.Two, it) },
+            onSiteDelta = { viewModel.siteDelta(PlayerId.Two, it) },
+            onAffinityDelta = { element, delta -> viewModel.affinityDelta(PlayerId.Two, element, delta) },
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun SelfPanel(
+    game: GameState,
+    viewModel: GameTrackerViewModel,
+    setName: String?,
+    modifier: Modifier = Modifier,
+) {
+    SetSkinnedPanel(setName) {
+        PlayerPanel(
+            title = stringResource(R.string.game_player_one),
+            isActive = game.activePlayer == PlayerId.One,
+            player = game.player(PlayerId.One),
+            onDamage = { viewModel.damage(PlayerId.One, it) },
+            onLifeGain = { viewModel.lifeGain(PlayerId.One, it) },
+            onManaDelta = { viewModel.manaDelta(PlayerId.One, it) },
+            onSiteDelta = { viewModel.siteDelta(PlayerId.One, it) },
+            onAffinityDelta = { element, delta -> viewModel.affinityDelta(PlayerId.One, element, delta) },
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
@@ -231,25 +266,25 @@ private fun ControlBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Tour $turn", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.game_turn_n, turn), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.xs)) {
                 FilledTonalIconButton(onClick = onNewTurn) {
-                    Icon(Icons.Filled.NavigateNext, contentDescription = "Tour suivant")
+                    Icon(Icons.Filled.NavigateNext, contentDescription = stringResource(R.string.game_next_turn))
                 }
                 IconButton(onClick = onUndo) {
-                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Annuler")
+                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.game_undo))
                 }
                 IconButton(onClick = onDice) {
-                    Icon(Icons.Filled.Casino, contentDescription = "Dés")
+                    Icon(Icons.Filled.Casino, contentDescription = stringResource(R.string.game_dice))
                 }
                 IconButton(onClick = onLog) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Journal")
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.game_log))
                 }
                 IconButton(onClick = onNewGame) {
-                    Icon(Icons.Filled.Add, contentDescription = "Nouvelle partie")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.game_new_game))
                 }
                 IconButton(onClick = { showEndConfirm = true }) {
-                    Icon(Icons.Filled.Flag, contentDescription = "Terminer")
+                    Icon(Icons.Filled.Flag, contentDescription = stringResource(R.string.game_finish))
                 }
             }
         }
@@ -257,16 +292,16 @@ private fun ControlBar(
 
     if (showEndConfirm) {
         SorceryDialog(
-            title = "Terminer la partie ?",
-            confirmText = "Terminer",
+            title = stringResource(R.string.game_end_confirm_title),
+            confirmText = stringResource(R.string.game_finish),
             onConfirm = {
                 showEndConfirm = false
                 onEndGame()
             },
-            dismissText = "Annuler",
+            dismissText = stringResource(R.string.game_cancel),
             onDismiss = { showEndConfirm = false },
         ) {
-            Text("La partie sera enregistrée dans l'historique.")
+            Text(stringResource(R.string.game_end_confirm_message))
         }
     }
 }

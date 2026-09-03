@@ -15,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 
 /** Indicateur de chargement centré, partagé par tous les écrans. */
@@ -96,7 +98,7 @@ fun ErrorState(
                 textAlign = TextAlign.Center,
             )
             if (onRetry != null) {
-                Button(onClick = onRetry) { Text("Réessayer") }
+                Button(onClick = onRetry) { Text(stringResource(R.string.core_retry)) }
             }
         }
     }

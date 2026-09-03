@@ -22,8 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
@@ -86,20 +88,20 @@ private fun GameSetupContent(
             .padding(spacing.md),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
-        Text("Vie de départ", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.game_starting_life), style = MaterialTheme.typography.titleMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
             CounterStepper(value = startingLife, onValueChange = { startingLife = it }, min = 1)
         }
 
         PlayerSetupRow(
-            label = "Joueur 1",
+            label = stringResource(R.string.game_player_one),
             avatar = p1Avatar,
             pseudo = p1Pseudo,
             onPseudoChange = { p1Pseudo = it },
             onPickAvatar = { pickerFor = PlayerId.One },
         )
         PlayerSetupRow(
-            label = "Joueur 2",
+            label = stringResource(R.string.game_player_two),
             avatar = p2Avatar,
             pseudo = p2Pseudo,
             onPseudoChange = { p2Pseudo = it },
@@ -110,7 +112,7 @@ private fun GameSetupContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
-            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text("Annuler") }
+            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.game_cancel)) }
             Button(
                 onClick = {
                     onConfirm(
@@ -122,7 +124,7 @@ private fun GameSetupContent(
                     )
                 },
                 modifier = Modifier.weight(1f),
-            ) { Text("Démarrer") }
+            ) { Text(stringResource(R.string.game_start)) }
         }
     }
 }
@@ -161,13 +163,13 @@ private fun PlayerSetupRow(
                 )
             }
             OutlinedButton(onClick = onPickAvatar) {
-                Text(avatar?.avatarName ?: "Choisir un avatar")
+                Text(avatar?.avatarName ?: stringResource(R.string.game_choose_avatar))
             }
         }
         OutlinedTextField(
             value = pseudo,
             onValueChange = onPseudoChange,
-            label = { Text("Pseudo (optionnel)") },
+            label = { Text(stringResource(R.string.game_pseudo_optional)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )

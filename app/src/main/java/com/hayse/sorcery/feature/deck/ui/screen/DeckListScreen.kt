@@ -25,11 +25,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.composable.LoadingState
 import com.hayse.sorcery.core.ui.composable.SorceryDialog
+import com.hayse.sorcery.core.ui.theme.LocalSetSkin
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.core.ui.theme.skin.Skins
+import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.deck.domain.model.DeckFormat
 import com.hayse.sorcery.feature.deck.ui.screen.composable.DeckSummaryRow
 import com.hayse.sorcery.feature.deck.ui.viewmodel.DeckListViewModel
@@ -49,20 +56,27 @@ fun DeckListScreen(
         when {
             state.loading -> LoadingState()
             state.decks.isEmpty() -> EmptyState(
-                title = "Aucun deck",
-                subtitle = "Crée ton premier deck avec le bouton +.",
+                title = stringResource(R.string.deck_list_empty_title),
+                subtitle = stringResource(R.string.deck_list_empty_subtitle),
             )
-            else -> LazyColumn(
-                contentPadding = PaddingValues(spacing.md),
-                verticalArrangement = Arrangement.spacedBy(spacing.sm),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(state.decks, key = { it.id }) { summary ->
-                    DeckSummaryRow(
-                        summary = summary,
-                        onClick = { onOpenDeck(summary.id) },
-                        onDelete = { viewModel.delete(summary.id) },
-                    )
+            else -> {
+                // Décoration désactivée si le skin ambiant est neutre (mode Off).
+                val skinEnabled = LocalSetSkin.current != Skins.Default
+                LazyColumn(
+                    contentPadding = PaddingValues(spacing.md),
+                    verticalArrangement = Arrangement.spacedBy(spacing.sm),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(state.decks, key = { it.id }) { summary ->
+                        val set = sorcerySetFromName(summary.avatarSetName)
+                        SorceryTheme(set = set, skin = if (skinEnabled) skinFor(set) else Skins.Default) {
+                            DeckSummaryRow(
+                                summary = summary,
+                                onClick = { onOpenDeck(summary.id) },
+                                onDelete = { viewModel.delete(summary.id) },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -71,7 +85,7 @@ fun DeckListScreen(
             onClick = { showCreate = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(spacing.md),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Nouveau deck")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.deck_new))
         }
     }
 
@@ -96,11 +110,11 @@ private fun CreateDeckDialog(
     val spacing = LocalSpacing.current
 
     SorceryDialog(
-        title = "Nouveau deck",
+        title = stringResource(R.string.deck_new),
         onDismiss = onDismiss,
-        confirmText = "Créer",
+        confirmText = stringResource(R.string.deck_create),
         onConfirm = { onConfirm(name, format) },
-        dismissText = "Annuler",
+        dismissText = stringResource(R.string.deck_cancel),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(spacing.sm),
@@ -109,7 +123,7 @@ private fun CreateDeckDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nom du deck") },
+                label = { Text(stringResource(R.string.deck_name_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -125,7 +139,7 @@ private fun FormatDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-        Text("Format : ${selected.label}")
+        Text(stringResource(R.string.deck_format_label, selected.label))
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
         DeckFormat.all.forEach { format ->

@@ -16,12 +16,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.ProvideCardList
 import com.hayse.sorcery.core.ui.ProvideTopBarSearch
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.composable.LoadingState
+import com.hayse.sorcery.core.ui.theme.LocalSetSkin
+import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedBackground
+import com.hayse.sorcery.core.ui.theme.skin.Skins
+import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.deck.domain.model.DeckEntry
 import com.hayse.sorcery.feature.deck.domain.model.DeckSection
 import com.hayse.sorcery.feature.deck.ui.screen.composable.DeckEntryRow
@@ -44,14 +52,20 @@ fun DeckEditorScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val spacing = LocalSpacing.current
 
+    // Le deck prend l'identité visuelle du set de son avatar (décoration neutre en mode Off).
+    val skinEnabled = LocalSetSkin.current != Skins.Default
+    val set = sorcerySetFromName(state.avatarSetName)
+
     when {
         state.loading -> LoadingState(modifier)
-        state.notFound -> EmptyState(title = "Deck introuvable", modifier = modifier)
-        else -> Column(modifier = modifier.fillMaxSize()) {
+        state.notFound -> EmptyState(title = stringResource(R.string.deck_not_found), modifier = modifier)
+        else -> SorceryTheme(set = set, skin = if (skinEnabled) skinFor(set) else Skins.Default) {
+            SkinnedBackground {
+            Column(modifier = modifier.fillMaxSize()) {
             OutlinedTextField(
                 value = state.name,
                 onValueChange = viewModel::rename,
-                label = { Text("Nom du deck") },
+                label = { Text(stringResource(R.string.deck_name_label)) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -71,6 +85,8 @@ fun DeckEditorScreen(
             when (state.tab) {
                 DeckEditorTab.Deck -> DeckContent(state, viewModel, onCardClick)
                 DeckEditorTab.Add -> AddContent(state, viewModel, onCardClick)
+            }
+            }
             }
         }
     }
@@ -99,7 +115,7 @@ private fun DeckContent(
         if (state.missingCount > 0) {
             item(key = "__missing__") {
                 Text(
-                    text = "${state.missingCount} carte(s) à acquérir pour compléter ce deck.",
+                    text = stringResource(R.string.deck_missing_to_complete, state.missingCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -108,7 +124,7 @@ private fun DeckContent(
 
         item(key = "__avatar_header__") {
             SectionHeader(
-                "Avatar",
+                stringResource(R.string.deck_section_avatar),
                 if (state.avatar != null) 1 else 0,
                 minimum = 1,
                 onClick = { viewModel.fillSection(DeckSection.Avatar) },
@@ -122,7 +138,7 @@ private fun DeckContent(
 
         item(key = "__spellbook_header__") {
             SectionHeader(
-                "Grimoire",
+                stringResource(R.string.deck_section_spellbook),
                 state.spellbookCount,
                 minimum = state.format.minSpellbook,
                 onClick = { viewModel.fillSection(DeckSection.Spellbook) },
@@ -132,7 +148,7 @@ private fun DeckContent(
 
         item(key = "__atlas_header__") {
             SectionHeader(
-                "Atlas",
+                stringResource(R.string.deck_section_atlas),
                 state.atlasCount,
                 minimum = state.format.minAtlas,
                 onClick = { viewModel.fillSection(DeckSection.Atlas) },
@@ -143,7 +159,7 @@ private fun DeckContent(
         if (state.avatar == null && state.spellbook.isEmpty() && state.atlas.isEmpty()) {
             item(key = "__empty__") {
                 Text(
-                    text = "Deck vide. Ajoute des cartes depuis l'onglet Ajouter.",
+                    text = stringResource(R.string.deck_empty_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -162,7 +178,7 @@ private fun AddContent(
     ProvideTopBarSearch(
         query = state.filter.query.orEmpty(),
         onQueryChange = viewModel::setQuery,
-        placeholder = "Rechercher une carte",
+        placeholder = stringResource(R.string.deck_search_card),
     )
     ProvideCardList(state.catalog.map { it.card.name })
     LazyColumn(
@@ -184,7 +200,7 @@ private fun AddContent(
             )
         }
         if (state.catalog.isEmpty()) {
-            item(key = "__empty__") { EmptyState(title = "Aucune carte") }
+            item(key = "__empty__") { EmptyState(title = stringResource(R.string.deck_no_card)) }
         } else {
             items(state.catalog, key = { it.card.name }) { entry ->
                 DeckEntryRow(entry, onClick = { onCardClick(entry.card.name) }, onAdjust = viewModel::adjust)
@@ -203,7 +219,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.deckEntries(
     }
 }
 
+@Composable
 private fun tabLabel(tab: DeckEditorTab): String = when (tab) {
-    DeckEditorTab.Deck -> "Deck"
-    DeckEditorTab.Add -> "Ajouter"
+    DeckEditorTab.Deck -> stringResource(R.string.deck_tab_deck)
+    DeckEditorTab.Add -> stringResource(R.string.deck_tab_add)
 }

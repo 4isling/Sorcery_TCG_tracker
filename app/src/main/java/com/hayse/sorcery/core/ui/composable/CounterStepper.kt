@@ -7,7 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 
 /**
  * Compteur réutilisable : tap = ±[step], appui long = ±[largeStep]. La valeur est bornée à [min]..[max].
@@ -31,7 +33,7 @@ fun CounterStepper(
     ) {
         AdjustButton(
             symbol = "−",
-            contentDescription = "Décrémenter",
+            contentDescription = stringResource(R.string.core_counter_decrement),
             onClick = { apply(-step) },
             onLongClick = { apply(-largeStep) },
         )
@@ -41,7 +43,7 @@ fun CounterStepper(
         )
         AdjustButton(
             symbol = "+",
-            contentDescription = "Incrémenter",
+            contentDescription = stringResource(R.string.core_counter_increment),
             onClick = { apply(step) },
             onLongClick = { apply(largeStep) },
         )

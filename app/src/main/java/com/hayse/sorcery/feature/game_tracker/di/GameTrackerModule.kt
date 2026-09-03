@@ -84,6 +84,7 @@ val gameTrackerModule = module {
             repository = get(),
             gameHistory = get(),
             playerPrefs = get(),
+            cardRepository = get(),
             applyDamage = get(),
             applyLifeLoss = get(),
             applyLifeGain = get(),
@@ -100,5 +101,5 @@ val gameTrackerModule = module {
     }
     viewModel { GameHistoryViewModel(get()) }
     viewModel { AvatarPickerViewModel(get()) }
-    viewModel { HomeViewModel(gameSession = get(), gameHistory = get()) }
+    viewModel { HomeViewModel(gameSession = get(), gameHistory = get(), settings = get()) }
 }

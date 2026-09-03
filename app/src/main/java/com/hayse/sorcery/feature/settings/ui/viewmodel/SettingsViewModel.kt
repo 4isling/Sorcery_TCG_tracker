@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hayse.sorcery.core.ui.theme.SorcerySet
 import com.hayse.sorcery.feature.settings.domain.model.AppLanguage
 import com.hayse.sorcery.feature.settings.domain.model.AppSettings
+import com.hayse.sorcery.feature.settings.domain.model.SkinMode
 import com.hayse.sorcery.feature.settings.domain.model.ThemeMode
 import com.hayse.sorcery.feature.settings.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,4 +23,7 @@ class SettingsViewModel(
     fun setThemeMode(mode: ThemeMode) = viewModelScope.launch { repository.setThemeMode(mode) }
     fun setLanguage(language: AppLanguage) = viewModelScope.launch { repository.setLanguage(language) }
     fun setThemeSet(set: SorcerySet?) = viewModelScope.launch { repository.setThemeSet(set) }
+    fun setSkinMode(mode: SkinMode) = viewModelScope.launch { repository.setSkinMode(mode) }
+    fun setSocialEnabled(enabled: Boolean) = viewModelScope.launch { repository.setSocialEnabled(enabled) }
+    fun setPseudo(pseudo: String) = viewModelScope.launch { repository.setPseudo(pseudo) }
 }

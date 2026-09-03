@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerState
@@ -63,7 +65,11 @@ fun PlayerPanel(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (isActive) "$displayName — tour actif" else displayName,
+                        text = if (isActive) {
+                            stringResource(R.string.game_active_turn_label, displayName)
+                        } else {
+                            displayName
+                        },
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
                     )
@@ -78,8 +84,8 @@ fun PlayerPanel(
                 onDamage = onDamage,
                 onLifeGain = onLifeGain,
             )
-            ResourceRow(label = "Mana", value = player.manaAvailable, onDelta = onManaDelta)
-            ResourceRow(label = "Sites", value = player.sitesControlled, onDelta = onSiteDelta)
+            ResourceRow(label = stringResource(R.string.game_mana), value = player.manaAvailable, onDelta = onManaDelta)
+            ResourceRow(label = stringResource(R.string.game_sites), value = player.sitesControlled, onDelta = onSiteDelta)
             AffinityRow(affinity = player.affinity, onDelta = onAffinityDelta)
         }
     }

@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameRecord
@@ -32,7 +34,7 @@ fun GameHistoryScreen(
     val games by viewModel.games.collectAsStateWithLifecycle()
 
     if (games.isEmpty()) {
-        EmptyState(title = "Aucune partie terminée", modifier = modifier)
+        EmptyState(title = stringResource(R.string.game_history_empty), modifier = modifier)
         return
     }
 
@@ -62,28 +64,42 @@ private fun GameRecordCard(record: GameRecord) {
                 style = MaterialTheme.typography.labelMedium,
             )
             Text(
-                text = "${playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One)}" +
-                    "  vs  " +
+                text = stringResource(
+                    R.string.game_history_versus,
+                    playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One),
                     playerLabel(record.playerTwoPseudo, record.playerTwoAvatar, PlayerId.Two),
+                ),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = winnerLabel(record),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Text("${record.turns} tour(s)", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.game_history_turns, record.turns), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
+@Composable
 private fun playerLabel(pseudo: String?, avatar: String?, id: PlayerId): String {
     val name = pseudo?.takeIf(String::isNotBlank)
-        ?: if (id == PlayerId.One) "Joueur 1" else "Joueur 2"
-    return if (avatar != null) "$name ($avatar)" else name
+        ?: if (id == PlayerId.One) {
+            stringResource(R.string.game_player_one)
+        } else {
+            stringResource(R.string.game_player_two)
+        }
+    return if (avatar != null) stringResource(R.string.game_history_name_avatar, name, avatar) else name
 }
 
+@Composable
 private fun winnerLabel(record: GameRecord): String = when (record.winner) {
-    PlayerId.One -> "Vainqueur : ${playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One)}"
-    PlayerId.Two -> "Vainqueur : ${playerLabel(record.playerTwoPseudo, record.playerTwoAvatar, PlayerId.Two)}"
-    null -> "Sans vainqueur"
+    PlayerId.One -> stringResource(
+        R.string.game_history_winner,
+        playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One),
+    )
+    PlayerId.Two -> stringResource(
+        R.string.game_history_winner,
+        playerLabel(record.playerTwoPseudo, record.playerTwoAvatar, PlayerId.Two),
+    )
+    null -> stringResource(R.string.game_history_no_winner)
 }

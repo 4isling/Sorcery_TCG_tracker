@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.ui.composable.AdjustButton
 import com.hayse.sorcery.core.ui.composable.ElementIcon
@@ -42,7 +44,7 @@ fun AffinityRow(
                 ) {
                     AdjustButton(
                         symbol = "−",
-                        contentDescription = "Diminuer ${element.name}",
+                        contentDescription = stringResource(R.string.game_affinity_decrease, element.name),
                         onClick = { onDelta(element, -1) },
                         onLongClick = { onDelta(element, -5) },
                         size = 32.dp,
@@ -55,7 +57,7 @@ fun AffinityRow(
                     )
                     AdjustButton(
                         symbol = "+",
-                        contentDescription = "Augmenter ${element.name}",
+                        contentDescription = stringResource(R.string.game_affinity_increase, element.name),
                         onClick = { onDelta(element, 1) },
                         onLongClick = { onDelta(element, 5) },
                         size = 32.dp,

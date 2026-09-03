@@ -19,4 +19,5 @@ val databaseModule = module {
     single { get<SorceryDatabase>().cardDao() }
     single { get<SorceryDatabase>().collectionDao() }
     single { get<SorceryDatabase>().deckDao() }
+    single { get<SorceryDatabase>().socialDao() }
 }

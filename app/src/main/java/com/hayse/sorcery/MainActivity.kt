@@ -13,7 +13,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.core.navigation.AppScaffold
 import com.hayse.sorcery.core.ui.AppLocalization
 import com.hayse.sorcery.core.ui.theme.SorceryTheme
+import com.hayse.sorcery.core.ui.theme.skin.Skins
+import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.settings.domain.model.AppSettings
+import com.hayse.sorcery.feature.settings.domain.model.SkinMode
 import com.hayse.sorcery.feature.settings.domain.model.ThemeMode
 import com.hayse.sorcery.feature.settings.domain.repository.SettingsRepository
 import org.koin.compose.koinInject
@@ -35,10 +38,17 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
             }
+            val skin = when (settings.skinMode) {
+                SkinMode.OFF -> Skins.Default
+                SkinMode.FIXED -> skinFor(settings.themeSet)
+            }
 
             AppLocalization(settings.language) {
-                SorceryTheme(set = settings.themeSet, darkTheme = darkTheme) {
-                    AppScaffold(widthSizeClass = windowSizeClass.widthSizeClass)
+                SorceryTheme(set = settings.themeSet, skin = skin, darkTheme = darkTheme) {
+                    AppScaffold(
+                        widthSizeClass = windowSizeClass.widthSizeClass,
+                        socialEnabled = settings.socialEnabled,
+                    )
                 }
             }
         }

@@ -10,15 +10,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.core.ui.theme.dimensions.Spacing
+import com.hayse.sorcery.core.ui.theme.skin.SetSkin
+import com.hayse.sorcery.core.ui.theme.skin.Skins
 
 /** Set qui teinte la sous-arborescence courante (null = thème de base). */
 val LocalSorcerySet = staticCompositionLocalOf<SorcerySet?> { null }
+
+/** Skin décoratif (police/formes/bordure/motif) de la sous-arborescence courante. */
+val LocalSetSkin = staticCompositionLocalOf<SetSkin> { Skins.Default }
 
 private const val ThemeTransitionMillis = 450
 
 @Composable
 fun SorceryTheme(
     set: SorcerySet? = null,
+    skin: SetSkin = Skins.Default,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
@@ -46,11 +52,12 @@ fun SorceryTheme(
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
         LocalSorcerySet provides set,
+        LocalSetSkin provides skin,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = SorceryTypography,
-            shapes = SorceryShapes,
+            typography = sorceryTypography(skin.displayFont),
+            shapes = skin.shapes,
             content = content,
         )
     }

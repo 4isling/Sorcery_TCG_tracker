@@ -8,8 +8,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.AdjustButton
 import com.hayse.sorcery.feature.game_tracker.domain.model.AvatarStatus
 
@@ -36,7 +38,7 @@ fun LifeCounter(
         ) {
             AdjustButton(
                 symbol = "−",
-                contentDescription = "Infliger des dégâts",
+                contentDescription = stringResource(R.string.game_deal_damage),
                 onClick = { onDamage(1) },
                 onLongClick = { onDamage(5) },
                 size = 64.dp,
@@ -50,7 +52,7 @@ fun LifeCounter(
             )
             AdjustButton(
                 symbol = "+",
-                contentDescription = "Gagner de la vie",
+                contentDescription = stringResource(R.string.game_gain_life),
                 onClick = { onLifeGain(1) },
                 onLongClick = { onLifeGain(5) },
                 size = 64.dp,
@@ -59,8 +61,8 @@ fun LifeCounter(
         if (status != AvatarStatus.Active) {
             Text(
                 text = when (status) {
-                    AvatarStatus.DeathsDoor -> "Seuil de la mort"
-                    AvatarStatus.Defeated -> "Vaincu"
+                    AvatarStatus.DeathsDoor -> stringResource(R.string.game_status_deaths_door)
+                    AvatarStatus.Defeated -> stringResource(R.string.game_status_defeated)
                     AvatarStatus.Active -> ""
                 },
                 style = MaterialTheme.typography.labelLarge,

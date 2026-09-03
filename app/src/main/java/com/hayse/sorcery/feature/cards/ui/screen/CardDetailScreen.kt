@@ -19,9 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.ui.LocalCardListContext
 import com.hayse.sorcery.core.ui.composable.CardImage
@@ -29,9 +31,14 @@ import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.core.ui.composable.ElementIcon
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.composable.LoadingState
+import com.hayse.sorcery.core.ui.theme.LocalSetSkin
 import com.hayse.sorcery.core.ui.theme.SorceryTheme
 import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedBackground
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedSectionTitle
+import com.hayse.sorcery.core.ui.theme.skin.Skins
+import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.cards.domain.model.CardDetail
 import com.hayse.sorcery.feature.cards.domain.model.Printing
@@ -49,7 +56,7 @@ fun CardDetailScreen(
 
     when {
         state.loading -> LoadingState(modifier)
-        state.detail == null -> EmptyState(title = "Carte introuvable", modifier = modifier)
+        state.detail == null -> EmptyState(title = stringResource(R.string.cards_detail_not_found), modifier = modifier)
         else -> DetailContent(
             detail = state.detail!!,
             owned = state.owned,
@@ -89,7 +96,10 @@ private fun DetailContent(
     val card = detail.card
     val spacing = LocalSpacing.current
     val set = sorcerySetFromName(detail.printings.firstOrNull()?.setName)
-    SorceryTheme(set = set) {
+    // On garde la décoration désactivée si le skin ambiant est neutre (mode Off).
+    val skin = if (LocalSetSkin.current == Skins.Default) Skins.Default else skinFor(set)
+    SorceryTheme(set = set, skin = skin) {
+    SkinnedBackground {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -98,14 +108,20 @@ private fun DetailContent(
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         CardImage(
-            imageUri = detail.printings.firstOrNull()?.imageUri ?: card.imageUri,
+            // card.imageUri est résolu vers la 1re impression dont le .webp existe vraiment ;
+            // l'URI brute d'une impression peut pointer vers un visuel absent (promo sans image).
+            imageUri = card.imageUri ?: detail.printings.firstOrNull()?.imageUri,
             contentDescription = card.name,
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth(0.7f)
                 .align(Alignment.CenterHorizontally),
         )
-        Text(card.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        SkinnedSectionTitle(
+            text = card.name,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
 
         val subtitle = buildString {
             append(card.type)
@@ -123,7 +139,11 @@ private fun DetailContent(
         }
 
         HorizontalDivider()
-        Text("Impressions", style = MaterialTheme.typography.titleMedium)
+        SkinnedSectionTitle(
+            text = stringResource(R.string.cards_printings),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
         detail.printings.forEach { printing ->
             PrintingRow(
                 printing = printing,
@@ -133,15 +153,16 @@ private fun DetailContent(
         }
     }
     }
+    }
 }
 
 @Composable
 private fun StatsRow(card: Card) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        card.cost?.let { Stat("Coût", it) }
-        card.attack?.let { Stat("Att", it) }
-        card.defence?.let { Stat("Déf", it) }
-        card.life?.let { Stat("Vie", it) }
+        card.cost?.let { Stat(stringResource(R.string.cards_stat_cost), it) }
+        card.attack?.let { Stat(stringResource(R.string.cards_stat_attack), it) }
+        card.defence?.let { Stat(stringResource(R.string.cards_stat_defence), it) }
+        card.life?.let { Stat(stringResource(R.string.cards_stat_life), it) }
     }
 }
 
@@ -161,7 +182,7 @@ private fun ThresholdsRow(thresholds: Map<Element, Int>) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Seuils", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.cards_thresholds), style = MaterialTheme.typography.labelLarge)
         active.forEach { (element, value) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ElementIcon(element = element, size = 18.dp)
@@ -185,7 +206,7 @@ private fun PrintingRow(printing: Printing, quantity: Int, onAdjust: (Int) -> Un
             )
             if (printing.artist.isNotBlank()) {
                 Text(
-                    text = "Illustration : ${printing.artist}",
+                    text = stringResource(R.string.cards_artist, printing.artist),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

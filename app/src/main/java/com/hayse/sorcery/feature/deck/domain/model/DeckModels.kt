@@ -42,6 +42,7 @@ data class DeckSummary(
     val name: String,
     val format: DeckFormat,
     val avatarName: String?,
+    val avatarSetName: String?,
     val avatarImageUri: String?,
     val spellbookCount: Int,
     val atlasCount: Int,
@@ -55,6 +56,8 @@ data class DeckDetail(
     val name: String,
     val format: DeckFormat,
     val entries: List<DeckEntry>,
+    /** Set de l'avatar : donne son identité visuelle au deck (null si pas d'avatar). */
+    val avatarSetName: String? = null,
 ) {
     val avatar: DeckEntry? get() = entries.firstOrNull { deckSectionOf(it.card.type) == DeckSection.Avatar }
     val spellbook: List<DeckEntry> get() = entries.filter { deckSectionOf(it.card.type) == DeckSection.Spellbook }

@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.CardGridItem
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerIdentity
 import com.hayse.sorcery.feature.game_tracker.ui.viewmodel.AvatarPickerViewModel
@@ -34,7 +36,7 @@ fun AvatarPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Choisir un avatar") },
+        title = { Text(stringResource(R.string.game_choose_avatar)) },
         text = {
             if (avatars.isEmpty()) {
                 Box(Modifier.fillMaxWidth().heightIn(min = 120.dp), Alignment.Center) {
@@ -67,7 +69,7 @@ fun AvatarPickerDialog(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.game_cancel)) }
         },
     )
 }

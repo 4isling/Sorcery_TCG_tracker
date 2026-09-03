@@ -2,9 +2,22 @@ package com.hayse.sorcery.feature.deck.domain.model
 
 enum class DeckIssueSeverity { Error, Warning }
 
+/**
+ * Problème de validation, indépendant de la langue. Le rendu texte est fait côté UI
+ * (voir `DeckIssueMessage.text()` dans la couche ui) pour rester localisable.
+ */
+sealed interface DeckIssueMessage {
+    data object AvatarRequired : DeckIssueMessage
+    data class TooManyAvatars(val count: Int) : DeckIssueMessage
+    data class SpellbookTooSmall(val count: Int, val min: Int) : DeckIssueMessage
+    data class AtlasTooSmall(val count: Int, val min: Int) : DeckIssueMessage
+    data class BannedRarity(val cardName: String, val rarity: String) : DeckIssueMessage
+    data class TooManyCopies(val cardName: String, val quantity: Int, val limit: Int) : DeckIssueMessage
+}
+
 data class DeckIssue(
     val severity: DeckIssueSeverity,
-    val message: String,
+    val message: DeckIssueMessage,
     /** Section à ouvrir dans l'onglet Ajouter pour corriger le problème. */
     val section: DeckSection? = null,
     /** Carte précise concernée (limite de copies, rareté interdite). */
@@ -31,11 +44,15 @@ object DeckValidator {
 
         when {
             avatarCount == 0 ->
-                issues += DeckIssue(DeckIssueSeverity.Error, "Il faut un Avatar.", section = DeckSection.Avatar)
+                issues += DeckIssue(
+                    DeckIssueSeverity.Error,
+                    DeckIssueMessage.AvatarRequired,
+                    section = DeckSection.Avatar,
+                )
             avatarCount > format.maxAvatar ->
                 issues += DeckIssue(
                     DeckIssueSeverity.Error,
-                    "Un seul Avatar autorisé ($avatarCount sélectionnés).",
+                    DeckIssueMessage.TooManyAvatars(avatarCount),
                     section = DeckSection.Avatar,
                 )
         }
@@ -43,14 +60,14 @@ object DeckValidator {
         if (spellbookCount < format.minSpellbook) {
             issues += DeckIssue(
                 DeckIssueSeverity.Error,
-                "Grimoire : $spellbookCount/${format.minSpellbook} sorts minimum.",
+                DeckIssueMessage.SpellbookTooSmall(spellbookCount, format.minSpellbook),
                 section = DeckSection.Spellbook,
             )
         }
         if (atlasCount < format.minAtlas) {
             issues += DeckIssue(
                 DeckIssueSeverity.Error,
-                "Atlas : $atlasCount/${format.minAtlas} sites minimum.",
+                DeckIssueMessage.AtlasTooSmall(atlasCount, format.minAtlas),
                 section = DeckSection.Atlas,
             )
         }
@@ -61,7 +78,7 @@ object DeckValidator {
             if (rarity != null && rarity in format.bannedRarities) {
                 issues += DeckIssue(
                     DeckIssueSeverity.Error,
-                    "${entry.card.name} : rareté ${rarity.name} interdite dans ce format.",
+                    DeckIssueMessage.BannedRarity(entry.card.name, rarity.name),
                     cardName = entry.card.name,
                 )
             }
@@ -69,7 +86,7 @@ object DeckValidator {
             if (entry.quantity > limit) {
                 issues += DeckIssue(
                     DeckIssueSeverity.Error,
-                    "${entry.card.name} : ${entry.quantity} copies (max $limit).",
+                    DeckIssueMessage.TooManyCopies(entry.card.name, entry.quantity, limit),
                     cardName = entry.card.name,
                 )
             }

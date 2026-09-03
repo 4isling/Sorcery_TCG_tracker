@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -36,7 +37,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -53,6 +53,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -64,6 +65,8 @@ import com.hayse.sorcery.core.ui.LocalTopBarSearch
 import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
 import com.hayse.sorcery.core.ui.TopBarSearchState
 import com.hayse.sorcery.core.ui.isAtLeastMedium
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedBackground
+import com.hayse.sorcery.core.ui.theme.skin.SkinnedTopBar
 import kotlinx.coroutines.launch
 
 /**
@@ -71,15 +74,18 @@ import kotlinx.coroutines.launch
  * Sur tablette (Medium/Expanded) : rail de navigation permanent à gauche.
  */
 @Composable
-fun AppScaffold(widthSizeClass: WindowWidthSizeClass) {
+fun AppScaffold(widthSizeClass: WindowWidthSizeClass, socialEnabled: Boolean = true) {
     val navController = rememberNavController()
 
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route ?: Destination.Home.route
-    val title = Destination.labelForRoute(currentRoute)
+    val title = stringResource(Destination.labelForRoute(currentRoute))
 
     val topBarSearch = remember { TopBarSearchState() }
     val cardListContext = remember { CardListContext() }
+
+    val destinations = Destination.drawerDestinations
+        .filter { it != Destination.Social || socialEnabled }
 
     CompositionLocalProvider(
         LocalWindowWidthSizeClass provides widthSizeClass,
@@ -87,9 +93,9 @@ fun AppScaffold(widthSizeClass: WindowWidthSizeClass) {
         LocalCardListContext provides cardListContext,
     ) {
         if (widthSizeClass.isAtLeastMedium) {
-            RailScaffold(navController, currentRoute, title)
+            RailScaffold(navController, currentRoute, title, destinations)
         } else {
-            DrawerScaffold(navController, currentRoute, title)
+            DrawerScaffold(navController, currentRoute, title, destinations)
         }
     }
 }
@@ -99,7 +105,7 @@ fun AppScaffold(widthSizeClass: WindowWidthSizeClass) {
 private fun TopBarContent(title: String) {
     val search = LocalTopBarSearch.current
     if (!search.visible || !search.expanded) {
-        Text(title)
+        Text(title, style = MaterialTheme.typography.titleLarge)
         return
     }
     val focusRequester = remember { FocusRequester() }
@@ -177,7 +183,12 @@ private val gameGraphRoutes = setOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DrawerScaffold(navController: NavHostController, currentRoute: String, title: String) {
+private fun DrawerScaffold(
+    navController: NavHostController,
+    currentRoute: String,
+    title: String,
+    destinations: List<Destination>,
+) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -188,10 +199,10 @@ private fun DrawerScaffold(navController: NavHostController, currentRoute: Strin
                 DrawerHeader()
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
-                Destination.drawerDestinations.forEach { destination ->
+                destinations.forEach { destination ->
                     NavigationDrawerItem(
                         icon = { Icon(drawerIcon(destination), contentDescription = null) },
-                        label = { Text(destination.label) },
+                        label = { Text(stringResource(destination.labelRes)) },
                         selected = destination.route == currentRoute,
                         onClick = {
                             scope.launch { drawerState.close() }
@@ -206,34 +217,41 @@ private fun DrawerScaffold(navController: NavHostController, currentRoute: Strin
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopAppBar(
+                SkinnedTopBar(
                     title = { TopBarContent(title) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                            Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.nav_menu))
                         }
                     },
                     actions = { TopBarSearchAction() },
                 )
             },
         ) { innerPadding ->
-            AppNavHost(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding),
-            )
+            SkinnedBackground {
+                AppNavHost(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RailScaffold(navController: NavHostController, currentRoute: String, title: String) {
+private fun RailScaffold(
+    navController: NavHostController,
+    currentRoute: String,
+    title: String,
+    destinations: List<Destination>,
+) {
     Row(modifier = Modifier.fillMaxSize()) {
         NavigationRail {
-            Destination.drawerDestinations.forEach { destination ->
+            destinations.forEach { destination ->
                 NavigationRailItem(
                     icon = { Icon(drawerIcon(destination), contentDescription = null) },
-                    label = { Text(destination.label) },
+                    label = { Text(stringResource(destination.labelRes)) },
                     selected = isSelected(destination, currentRoute),
                     onClick = { navigateToTopLevel(navController, destination, currentRoute) },
                 )
@@ -242,16 +260,18 @@ private fun RailScaffold(navController: NavHostController, currentRoute: String,
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopAppBar(
+                SkinnedTopBar(
                     title = { TopBarContent(title) },
                     actions = { TopBarSearchAction() },
                 )
             },
         ) { innerPadding ->
-            AppNavHost(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding),
-            )
+            SkinnedBackground {
+                AppNavHost(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
         }
     }
 }
@@ -283,6 +303,7 @@ private fun drawerIcon(destination: Destination): ImageVector = when (destinatio
     Destination.Collection -> Icons.Filled.CollectionsBookmark
     Destination.GameMenu -> Icons.Filled.SportsEsports
     Destination.DeckBuilder -> Icons.Filled.Dashboard
+    Destination.Social -> Icons.Filled.SwapHoriz
     Destination.Settings -> Icons.Filled.Settings
     else -> Icons.Filled.Home
 }

@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.isExpanded
@@ -39,6 +41,9 @@ import com.hayse.sorcery.feature.game_tracker.ui.screen.GameTrackerScreen
 import com.hayse.sorcery.feature.game_tracker.ui.viewmodel.GameTrackerViewModel
 import com.hayse.sorcery.feature.home.ui.screen.HomeScreen
 import com.hayse.sorcery.feature.settings.ui.screen.SettingsScreen
+import com.hayse.sorcery.feature.social.ui.screen.GlobalRoomScreen
+import com.hayse.sorcery.feature.social.ui.screen.RoomScreen
+import com.hayse.sorcery.feature.social.ui.screen.SocialHubScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -61,6 +66,7 @@ fun AppNavHost(
                 onOpenCollection = { navController.navigate(Destination.Collection.route) },
                 onOpenGameMenu = { navController.navigate(Destination.GameMenu.route) },
                 onOpenDecks = { navController.navigate(Destination.DeckBuilder.route) },
+                onOpenSocial = { navController.navigate(Destination.Social.route) },
                 onResumeGame = { navController.navigate(Destination.GameTracker.route) },
                 onOpenHistory = { navController.navigate(Destination.GameHistory.route) },
             )
@@ -131,6 +137,23 @@ fun AppNavHost(
                 onOpenDeck = { deckId -> navController.navigate(Destination.DeckEditor.routeFor(deckId)) },
             )
         }
+        composable(Destination.Social.route) {
+            SocialHubScreen(
+                onStartGlobal = { navController.navigate(Destination.Global.route) },
+                onStartRoom = { navController.navigate(Destination.Room.route) },
+                onCardClick = { name -> navController.navigate(Destination.CardDetail.routeFor(name)) },
+            )
+        }
+        composable(Destination.Room.route) {
+            RoomScreen(
+                onCardClick = { name -> navController.navigate(Destination.CardDetail.routeFor(name)) },
+            )
+        }
+        composable(Destination.Global.route) {
+            GlobalRoomScreen(
+                onCardClick = { name -> navController.navigate(Destination.CardDetail.routeFor(name)) },
+            )
+        }
         composable(Destination.Settings.route) {
             SettingsScreen()
         }
@@ -159,7 +182,7 @@ private fun CardsMasterDetail() {
         VerticalDivider()
         Box(modifier = Modifier.weight(1f).fillMaxSize()) {
             selected?.let { name -> CardDetailScreen(name = name) }
-                ?: EmptyState(title = "Sélectionne une carte")
+                ?: EmptyState(title = stringResource(R.string.nav_select_card))
         }
     }
 }
