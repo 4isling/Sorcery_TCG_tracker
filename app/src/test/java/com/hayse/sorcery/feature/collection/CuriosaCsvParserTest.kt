@@ -35,6 +35,40 @@ class CuriosaCsvParserTest {
     }
 
     @Test
+    fun `product camelCase normalise en souligne`() {
+        val csv = """
+            card name,set,finish,product,quantity
+            Bruin,Arthurian Legends,Standard,BoxTopper,1
+        """.trimIndent()
+        val row = CuriosaCsvParser.parse(csv).rows.single()
+        assertEquals("Box_Topper", row.product)
+    }
+
+    @Test
+    fun `nouveau format Curiosa avec BOM et Set Name`() {
+        val csv = "﻿Card Name,Card Slug,Quantity,Set Name,Printed At,Product,Finish,Notes\n" +
+            "\"Aaj-kegon Ghost Crabs\",\"aaj_kegon_ghost_crabs\",\"1\",\"Gothic\",\"2025-12-05T07:00:00.000Z\",\"Booster\",\"Standard\",\"\""
+        val result = CuriosaCsvParser.parse(csv)
+        assertTrue(result.invalid.isEmpty())
+        val row = result.rows.single()
+        assertEquals("Aaj-kegon Ghost Crabs", row.cardName)
+        assertEquals("Gothic", row.set)
+        assertEquals("Standard", row.finish)
+        assertEquals("Booster", row.product)
+        assertEquals(1, row.quantity)
+    }
+
+    @Test
+    fun `alias Set Name reconnu`() {
+        val csv = """
+            card name,set name,finish,product,quantity
+            Sea Serpent,Alpha,Standard,Booster,3
+        """.trimIndent()
+        val row = CuriosaCsvParser.parse(csv).rows.single()
+        assertEquals("Alpha", row.set)
+    }
+
+    @Test
     fun `ordre des colonnes indifferent`() {
         val csv = """
             quantity,product,finish,set,card name

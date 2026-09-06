@@ -18,14 +18,23 @@ data class CuriosaParseResult(
  */
 object CuriosaCsvParser {
 
-    private val REQUIRED = listOf("card name", "set", "finish", "product", "quantity")
+    // Champ canonique -> en-têtes acceptés (Curiosa a exporté "set" puis "Set Name").
+    private val REQUIRED = mapOf(
+        "card name" to listOf("card name"),
+        "set" to listOf("set", "set name"),
+        "finish" to listOf("finish"),
+        "product" to listOf("product"),
+        "quantity" to listOf("quantity"),
+    )
 
     fun parse(text: String): CuriosaParseResult {
-        val records = tokenize(text)
+        val records = tokenize(text.removePrefix("﻿"))
         if (records.isEmpty()) return CuriosaParseResult(emptyList(), emptyList())
 
         val header = records.first().map { it.trim().lowercase() }
-        val index = REQUIRED.associateWith { header.indexOf(it) }
+        val index = REQUIRED.mapValues { (_, aliases) ->
+            aliases.firstNotNullOfOrNull { a -> header.indexOf(a).takeIf { it >= 0 } } ?: -1
+        }
         if (index.values.any { it < 0 }) {
             // En-tête inexploitable : tout le corps est rejeté.
             return CuriosaParseResult(emptyList(), records.drop(1).map { it.joinToString(",") })
@@ -53,7 +62,11 @@ object CuriosaCsvParser {
         return CuriosaParseResult(rows, invalid)
     }
 
-    fun normalizeProduct(raw: String): String = raw.trim().replace(" ", "_")
+    // La base utilise le format PascalCase_souligné (ex. "Box_Topper").
+    // Curiosa a exporté "Box Topper" (espace) puis "BoxTopper" (camelCase) -> on ramène aux deux.
+    fun normalizeProduct(raw: String): String = raw.trim()
+        .replace(" ", "_")
+        .replace(Regex("([a-z0-9])([A-Z])"), "$1_$2")
 
     /** Découpe le texte CSV en enregistrements de champs (RFC4180 minimal). */
     private fun tokenize(text: String): List<List<String>> {
