@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.DropdownMenu
@@ -31,19 +30,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.R
-import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.core.shared.model.ElementGroup
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.ProvideCardList
 import com.hayse.sorcery.core.ui.ProvideTopBarSearch
 import com.hayse.sorcery.core.ui.composable.CardGridItem
 import com.hayse.sorcery.core.ui.composable.EmptyState
+import com.hayse.sorcery.core.ui.composable.GroupLabelRow
 import com.hayse.sorcery.core.ui.composable.LoadingState
+import com.hayse.sorcery.core.ui.composable.SetHeaderRow
 import com.hayse.sorcery.core.ui.theme.SorceryTheme
 import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.feature.cards.domain.model.GridRow
+import com.hayse.sorcery.feature.cards.domain.model.sortTypesForFilter
 import com.hayse.sorcery.feature.cards.ui.viewmodel.CardBrowserViewModel
 import org.koin.androidx.compose.koinViewModel
+
+private val RARITY_FILTER_ORDER =
+    listOf(Rarity.Unique, Rarity.Elite, Rarity.Exceptional, Rarity.Ordinary)
 
 @Composable
 fun CardListScreen(
@@ -60,7 +66,7 @@ fun CardListScreen(
         onQueryChange = viewModel::setQuery,
         placeholder = stringResource(R.string.cards_search_placeholder),
     )
-    ProvideCardList(state.cards.map { it.name })
+    ProvideCardList(state.cardNames)
 
     SorceryTheme(set = set) {
         if (state.loading) {
@@ -81,30 +87,44 @@ fun CardListScreen(
                         onSelect = viewModel::setOwnership,
                     )
                     FilterBar(
-                        selectedElement = state.filter.element,
+                        selectedElement = state.filter.elementGroup,
                         selectedRarity = state.filter.rarity,
                         selectedType = state.filter.type,
                         selectedSet = state.filter.setName,
                         types = state.availableTypes,
                         sets = state.availableSets,
-                        onElement = viewModel::setElement,
+                        onElement = viewModel::setElementGroup,
                         onRarity = viewModel::setRarity,
                         onType = viewModel::setType,
                         onSet = viewModel::setSet,
                     )
                 }
             }
-            if (state.cards.isEmpty()) {
+            if (state.rows.isEmpty()) {
                 item(key = "__empty__", span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(title = stringResource(R.string.cards_empty))
                 }
             } else {
-                items(state.cards, key = { it.name }) { card ->
-                    CardGridItem(
-                        imageUri = card.imageUri,
-                        name = card.name,
-                        onClick = { onCardClick(card.name) },
-                    )
+                state.rows.forEachIndexed { i, row ->
+                    when (row) {
+                        is GridRow.SetHeader -> item(
+                            key = "set_$i",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) { SetHeaderRow(row.setName) }
+
+                        is GridRow.GroupLabel -> item(
+                            key = "grp_$i",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) { GroupLabelRow(row.text) }
+
+                        is GridRow.Cell -> item(key = "${row.setName}_${row.card.name}") {
+                            CardGridItem(
+                                imageUri = row.card.imageUri,
+                                name = row.card.name,
+                                onClick = { onCardClick(row.card.name) },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -141,13 +161,13 @@ private fun ownershipLabel(ownership: Ownership): String = when (ownership) {
 
 @Composable
 private fun FilterBar(
-    selectedElement: Element?,
+    selectedElement: ElementGroup?,
     selectedRarity: Rarity?,
     selectedType: String?,
     selectedSet: String?,
     types: List<String>,
     sets: List<String>,
-    onElement: (Element?) -> Unit,
+    onElement: (ElementGroup?) -> Unit,
     onRarity: (Rarity?) -> Unit,
     onType: (String?) -> Unit,
     onSet: (String?) -> Unit,
@@ -169,11 +189,11 @@ private fun FilterBar(
                 .padding(horizontal = spacing.md),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
-            Element.entries.forEach { element ->
+            ElementGroup.entries.forEach { group ->
                 FilterChip(
-                    selected = selectedElement == element,
-                    onClick = { onElement(if (selectedElement == element) null else element) },
-                    label = { Text(element.name) },
+                    selected = selectedElement == group,
+                    onClick = { onElement(if (selectedElement == group) null else group) },
+                    label = { Text(group.name) },
                 )
             }
         }
@@ -184,7 +204,7 @@ private fun FilterBar(
                 .padding(horizontal = spacing.md),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
-            types.forEach { type ->
+            sortTypesForFilter(types).forEach { type ->
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { onType(if (selectedType == type) null else type) },
@@ -199,7 +219,7 @@ private fun FilterBar(
                 .padding(horizontal = spacing.md),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
-            Rarity.entries.forEach { rarity ->
+            RARITY_FILTER_ORDER.forEach { rarity ->
                 FilterChip(
                     selected = selectedRarity == rarity,
                     onClick = { onRarity(if (selectedRarity == rarity) null else rarity) },

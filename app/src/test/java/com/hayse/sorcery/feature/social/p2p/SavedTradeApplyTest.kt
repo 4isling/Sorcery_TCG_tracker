@@ -4,6 +4,7 @@ import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
 import com.hayse.sorcery.feature.cards.data.local.model.PrintingKey
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
@@ -123,7 +124,7 @@ private class RecordingCollectionRepository : CollectionRepository {
         adjustments += Triple(slug, finish, delta)
     }
 
-    override fun observeCollection(filter: CollectionFilter): Flow<List<CollectionItem>> = emptyFlow()
+    override fun observeCollection(filter: CollectionFilter): Flow<List<SetEntry<CollectionItem>>> = emptyFlow()
     override fun observeOwnedForCard(cardName: String): Flow<List<OwnedCopy>> = emptyFlow()
     override fun observeSetCompletion(): Flow<List<SetCompletion>> = emptyFlow()
     override fun observeSurplus(): Flow<List<SurplusCard>> = emptyFlow()

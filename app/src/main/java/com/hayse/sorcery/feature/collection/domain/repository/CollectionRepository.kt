@@ -1,6 +1,7 @@
 package com.hayse.sorcery.feature.collection.domain.repository
 
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CollectionRepository {
 
-    fun observeCollection(filter: CollectionFilter): Flow<List<CollectionItem>>
+    fun observeCollection(filter: CollectionFilter): Flow<List<SetEntry<CollectionItem>>>
 
     fun observeOwnedForCard(cardName: String): Flow<List<OwnedCopy>>
 

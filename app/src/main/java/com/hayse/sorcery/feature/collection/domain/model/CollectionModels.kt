@@ -1,6 +1,6 @@
 package com.hayse.sorcery.feature.collection.domain.model
 
-import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.core.shared.model.ElementGroup
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.feature.cards.domain.model.Card
@@ -45,7 +45,7 @@ data class ImportReport(
 /** Filtres de la collection ; un champ null = pas de contrainte. */
 data class CollectionFilter(
     val query: String? = null,
-    val element: Element? = null,
+    val elementGroup: ElementGroup? = null,
     val type: String? = null,
     val rarity: Rarity? = null,
     val setName: String? = null,

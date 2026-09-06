@@ -4,6 +4,7 @@ import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
 import com.hayse.sorcery.feature.cards.data.repository.CardImageResolver
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.data.csv.CuriosaCsvParser
 import com.hayse.sorcery.feature.collection.data.local.dao.CollectionDao
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
@@ -27,18 +28,26 @@ class CollectionRepositoryImpl(
 
     private fun observeAllCards() = cardDao.observeCards(null, null, null, null, null)
 
-    override fun observeCollection(filter: CollectionFilter): Flow<List<CollectionItem>> =
+    override fun observeCollection(filter: CollectionFilter): Flow<List<SetEntry<CollectionItem>>> =
         combine(
             cardDao.observeCards(
                 query = filter.query?.takeIf { it.isNotBlank() },
-                element = filter.element?.name,
+                // Neutre/Multi ne s'expriment pas en SQL : filtre appliqué en Kotlin ci-dessous.
+                element = null,
                 type = filter.type,
                 rarity = filter.rarity?.name,
                 setName = filter.setName,
             ),
             collectionDao.observeEntries(),
         ) { cards, entries ->
-            CollectionComputations.collectionItems(cards, entries, filter.ownership, imageResolver::imageUriForSlugs)
+            CollectionComputations.collectionEntries(
+                cards = cards,
+                entries = entries,
+                ownership = filter.ownership,
+                elementGroup = filter.elementGroup,
+                setName = filter.setName,
+                imageUriForSlugs = imageResolver::imageUriForSlugs,
+            )
         }
 
     override fun observeOwnedForCard(cardName: String): Flow<List<OwnedCopy>> =

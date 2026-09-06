@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -52,6 +53,8 @@ import com.hayse.sorcery.core.ui.ProvideTopBarSearch
 import com.hayse.sorcery.core.ui.composable.CardGridItem
 import com.hayse.sorcery.core.ui.composable.CountBadge
 import com.hayse.sorcery.core.ui.composable.EmptyState
+import com.hayse.sorcery.core.ui.composable.GroupLabelRow
+import com.hayse.sorcery.core.ui.composable.SetHeaderRow
 import com.hayse.sorcery.core.ui.isExpanded
 import com.hayse.sorcery.core.ui.theme.LocalSetSkin
 import com.hayse.sorcery.core.ui.theme.SorceryTheme
@@ -60,6 +63,8 @@ import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.core.ui.theme.skin.Skins
 import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.GridRow
+import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.SetCompletion
 import com.hayse.sorcery.feature.collection.domain.model.SurplusCard
 import com.hayse.sorcery.feature.collection.ui.screen.composable.AdvancedFilters
@@ -110,7 +115,7 @@ fun CollectionScreen(
             onQueryChange = viewModel::setQuery,
             placeholder = stringResource(R.string.collection_search_placeholder),
         )
-        ProvideCardList(state.items.map { it.card.name })
+        ProvideCardList(state.cardNames)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -188,7 +193,7 @@ private fun CollectionTabContent(
             }
             item(key = "__filters__", span = { GridItemSpan(maxLineSpan) }) { CollectionFilters(state, viewModel) }
 
-            if (state.items.isEmpty()) {
+            if (state.rows.isEmpty()) {
                 item(key = "__empty__", span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
@@ -198,14 +203,7 @@ private fun CollectionTabContent(
                     ) { Text(stringResource(R.string.collection_no_cards), style = MaterialTheme.typography.bodyLarge) }
                 }
             } else {
-                items(state.items, key = { it.card.name }) { item ->
-                    CardGridItem(
-                        imageUri = item.card.imageUri,
-                        name = item.card.name,
-                        onClick = { onCardClick(item.card.name) },
-                        footer = { CollectionQuantityStepper(item, viewModel::adjust) },
-                    )
-                }
+                collectionRows(state.rows, onCardClick, viewModel::adjust)
             }
         }
 
@@ -252,7 +250,7 @@ private fun ExpandedCollectionTabContent(
             CollectionFilters(state, viewModel)
         }
         VerticalDivider()
-        if (state.items.isEmpty()) {
+        if (state.rows.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.collection_no_cards), style = MaterialTheme.typography.bodyLarge)
             }
@@ -264,14 +262,7 @@ private fun ExpandedCollectionTabContent(
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             ) {
-                items(state.items, key = { it.card.name }) { item ->
-                    CardGridItem(
-                        imageUri = item.card.imageUri,
-                        name = item.card.name,
-                        onClick = { onCardClick(item.card.name) },
-                        footer = { CollectionQuantityStepper(item, viewModel::adjust) },
-                    )
-                }
+                collectionRows(state.rows, onCardClick, viewModel::adjust)
             }
         }
     }
@@ -289,9 +280,9 @@ private fun CollectionFilters(
     ) {
         QuickFilterChips(
             ownership = state.filter.ownership,
-            element = state.filter.element,
+            element = state.filter.elementGroup,
             onOwnership = viewModel::setOwnership,
-            onElement = viewModel::setElement,
+            onElement = viewModel::setElementGroup,
         )
         AdvancedFilters(
             rarity = state.filter.rarity,
@@ -403,6 +394,34 @@ private fun SurplusList(
                 onClick = { onCardClick(row.card.name) },
                 badge = { CountBadge("+${row.surplus}") },
             )
+        }
+    }
+}
+
+/** Rend les lignes groupées (en-têtes de set, séparateurs, cellules) dans une grille collection. */
+private fun LazyGridScope.collectionRows(
+    rows: List<GridRow<CollectionItem>>,
+    onCardClick: (String) -> Unit,
+    onAdjust: (slug: String, finish: String, delta: Int) -> Unit,
+) {
+    rows.forEachIndexed { i, row ->
+        when (row) {
+            is GridRow.SetHeader -> item(key = "set_$i", span = { GridItemSpan(maxLineSpan) }) {
+                SetHeaderRow(row.setName)
+            }
+
+            is GridRow.GroupLabel -> item(key = "grp_$i", span = { GridItemSpan(maxLineSpan) }) {
+                GroupLabelRow(row.text)
+            }
+
+            is GridRow.Cell -> item(key = "${row.setName}_${row.card.name}") {
+                CardGridItem(
+                    imageUri = row.card.imageUri,
+                    name = row.card.name,
+                    onClick = { onCardClick(row.card.name) },
+                    footer = { CollectionQuantityStepper(row.payload, onAdjust) },
+                )
+            }
         }
     }
 }

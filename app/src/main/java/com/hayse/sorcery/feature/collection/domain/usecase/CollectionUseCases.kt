@@ -1,6 +1,7 @@
 package com.hayse.sorcery.feature.collection.domain.usecase
 
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
@@ -11,7 +12,7 @@ import com.hayse.sorcery.feature.collection.domain.repository.CollectionReposito
 import kotlinx.coroutines.flow.Flow
 
 class ObserveCollectionUseCase(private val repository: CollectionRepository) {
-    operator fun invoke(filter: CollectionFilter): Flow<List<CollectionItem>> =
+    operator fun invoke(filter: CollectionFilter): Flow<List<SetEntry<CollectionItem>>> =
         repository.observeCollection(filter)
 }
 

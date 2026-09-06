@@ -1,12 +1,14 @@
 package com.hayse.sorcery.feature.cards.data.repository
 
 import com.hayse.sorcery.core.shared.model.Ownership
+import com.hayse.sorcery.core.shared.model.elementGroupOf
 import com.hayse.sorcery.feature.cards.data.local.CardCatalogSeeder
 import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
 import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.cards.domain.model.CardDetail
 import com.hayse.sorcery.feature.cards.domain.model.CardFilter
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.cards.domain.repository.CardRepository
 import com.hayse.sorcery.feature.collection.data.local.dao.CollectionDao
 import kotlinx.coroutines.flow.Flow
@@ -21,25 +23,32 @@ class CardRepositoryImpl(
 
     override suspend fun ensureSeeded() = seeder.ensureSeeded()
 
-    override fun observeCards(filter: CardFilter): Flow<List<Card>> =
+    override fun observeCards(filter: CardFilter): Flow<List<SetEntry<Card>>> =
         combine(
             dao.observeCards(
                 query = filter.query?.takeIf { it.isNotBlank() },
-                element = filter.element?.name,
+                // Neutre/Multi ne s'expriment pas en SQL : filtre appliqué en Kotlin ci-dessous.
+                element = null,
                 type = filter.type,
                 rarity = filter.rarity?.name,
                 setName = filter.setName,
             ),
             collectionDao.observeEntries(),
         ) { rows, entries ->
-            if (filter.ownership == Ownership.All) {
-                rows.map { it.toCard(imageResolver::imageUriForSlugs) }
-            } else {
-                val quantityBySlug = entries.associate { it.printingSlug to it.quantity }
-                rows.filter { keepByOwnership(it, quantityBySlug, filter.ownership) }
-                    .map { it.toCard(imageResolver::imageUriForSlugs) }
-            }
+            val quantityBySlug = entries.associate { it.printingSlug to it.quantity }
+            rows.asSequence()
+                .filter { filter.ownership == Ownership.All || keepByOwnership(it, quantityBySlug, filter.ownership) }
+                .flatMap { cwp -> toSetEntries(cwp, filter).asSequence() }
+                .filter { filter.elementGroup == null || elementGroupOf(it.card.elements) == filter.elementGroup }
+                .toList()
         }
+
+    private fun toSetEntries(cwp: CardWithPrintings, filter: CardFilter): List<SetEntry<Card>> {
+        val card = cwp.toCard(imageResolver::imageUriForSlugs)
+        val sets = if (filter.setName != null) listOf(filter.setName)
+        else cwp.printings.map { it.setName }.distinct()
+        return sets.map { SetEntry(it, card, card) }
+    }
 
     private fun keepByOwnership(
         cwp: CardWithPrintings,

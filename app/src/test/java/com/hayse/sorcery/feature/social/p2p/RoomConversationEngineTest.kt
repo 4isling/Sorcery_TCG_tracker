@@ -2,6 +2,7 @@ package com.hayse.sorcery.feature.social.p2p
 
 import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.cards.domain.model.Printing
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
@@ -200,7 +201,7 @@ private class RecordingCollection : CollectionRepository {
         adjustments += Triple(slug, finish, delta)
     }
 
-    override fun observeCollection(filter: CollectionFilter): Flow<List<CollectionItem>> =
+    override fun observeCollection(filter: CollectionFilter): Flow<List<SetEntry<CollectionItem>>> =
         MutableStateFlow(emptyList())
 
     override fun observeOwnedForCard(cardName: String): Flow<List<OwnedCopy>> = emptyFlow()

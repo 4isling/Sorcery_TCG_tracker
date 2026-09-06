@@ -2,10 +2,11 @@ package com.hayse.sorcery.feature.cards.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.core.shared.model.ElementGroup
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.feature.cards.domain.model.CardFilter
+import com.hayse.sorcery.feature.cards.domain.model.buildGridRows
 import com.hayse.sorcery.feature.cards.domain.repository.CardRepository
 import com.hayse.sorcery.feature.cards.domain.usecase.ObserveCardsUseCase
 import com.hayse.sorcery.feature.cards.ui.viewmodel.state.CardBrowserViewState
@@ -41,15 +42,15 @@ class CardBrowserViewModel(
             }
         }
         _filter
-            .flatMapLatest { filter -> observeCards(filter).map { cards -> filter to cards } }
-            .onEach { (filter, cards) ->
-                _state.update { it.copy(filter = filter, cards = cards, loading = false) }
+            .flatMapLatest { filter -> observeCards(filter).map { entries -> filter to entries } }
+            .onEach { (filter, entries) ->
+                _state.update { it.copy(filter = filter, rows = buildGridRows(entries), loading = false) }
             }
             .launchIn(viewModelScope)
     }
 
     fun setQuery(query: String) = _filter.update { it.copy(query = query) }
-    fun setElement(element: Element?) = _filter.update { it.copy(element = element) }
+    fun setElementGroup(group: ElementGroup?) = _filter.update { it.copy(elementGroup = group) }
     fun setType(type: String?) = _filter.update { it.copy(type = type) }
     fun setRarity(rarity: Rarity?) = _filter.update { it.copy(rarity = rarity) }
     fun setSet(setName: String?) = _filter.update { it.copy(setName = setName) }

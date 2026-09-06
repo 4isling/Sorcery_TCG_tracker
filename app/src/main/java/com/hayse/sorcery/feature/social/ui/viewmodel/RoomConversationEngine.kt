@@ -187,7 +187,7 @@ class RoomConversationEngine(
 
     private suspend fun currentCollectionEntries(): List<PayloadEntry> =
         collection.observeCollection(CollectionFilter()).first()
-            .flatMap { item -> item.copies }
+            .flatMap { entry -> entry.payload.copies }
             .filter { it.quantity > 0 }
             .map { PayloadEntry(it.slug, it.finish, it.quantity) }
 }

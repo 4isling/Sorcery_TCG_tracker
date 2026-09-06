@@ -31,13 +31,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hayse.sorcery.R
-import com.hayse.sorcery.core.shared.model.Element
+import com.hayse.sorcery.core.shared.model.ElementGroup
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.composable.AdjustButton
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedCard
+import com.hayse.sorcery.feature.cards.domain.model.sortTypesForFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.SetCompletion
+
+private val RARITY_FILTER_ORDER =
+    listOf(Rarity.Unique, Rarity.Elite, Rarity.Exceptional, Rarity.Ordinary)
 
 /** Ligne de complétion d'un set : nom + owned/total + barre. Cliquable pour déplier les manquants. */
 @Composable
@@ -124,9 +128,9 @@ private fun CompactStepper(value: Int, onValueChange: (Int) -> Unit) {
 @Composable
 fun QuickFilterChips(
     ownership: Ownership,
-    element: Element?,
+    element: ElementGroup?,
     onOwnership: (Ownership) -> Unit,
-    onElement: (Element?) -> Unit,
+    onElement: (ElementGroup?) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
@@ -151,7 +155,7 @@ fun QuickFilterChips(
                 .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Element.entries.forEach { entry ->
+            ElementGroup.entries.forEach { entry ->
                 FilterChip(
                     selected = element == entry,
                     onClick = { onElement(if (element == entry) null else entry) },
@@ -193,7 +197,7 @@ fun AdvancedFilters(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                types.forEach { entry ->
+                sortTypesForFilter(types).forEach { entry ->
                     FilterChip(
                         selected = type == entry,
                         onClick = { onType(if (type == entry) null else entry) },
@@ -207,7 +211,7 @@ fun AdvancedFilters(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Rarity.entries.forEach { entry ->
+                RARITY_FILTER_ORDER.forEach { entry ->
                     FilterChip(
                         selected = rarity == entry,
                         onClick = { onRarity(if (rarity == entry) null else entry) },

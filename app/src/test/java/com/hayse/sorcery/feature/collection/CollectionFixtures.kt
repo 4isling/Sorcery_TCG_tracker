@@ -13,6 +13,7 @@ object CollectionFixtures {
         name: String,
         rarity: String = "Ordinary",
         type: String = "Minion",
+        elements: String = "",
     ): CardEntity = CardEntity(
         name = name,
         type = type,
@@ -26,7 +27,7 @@ object CollectionFixtures {
         thEarth = 0,
         thFire = 0,
         thWater = 0,
-        elements = "",
+        elements = elements,
         subTypes = "",
     )
 
@@ -52,8 +53,10 @@ object CollectionFixtures {
     fun cardWith(
         name: String,
         rarity: String = "Ordinary",
+        type: String = "Minion",
+        elements: String = "",
         printings: List<PrintingEntity>,
-    ): CardWithPrintings = CardWithPrintings(card(name, rarity), printings)
+    ): CardWithPrintings = CardWithPrintings(card(name, rarity, type, elements), printings)
 
     fun key(
         slug: String,

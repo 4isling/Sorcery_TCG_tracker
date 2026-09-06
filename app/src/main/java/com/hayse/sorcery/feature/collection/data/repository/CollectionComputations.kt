@@ -1,11 +1,14 @@
 package com.hayse.sorcery.feature.collection.data.repository
 
+import com.hayse.sorcery.core.shared.model.ElementGroup
 import com.hayse.sorcery.core.shared.model.Ownership
+import com.hayse.sorcery.core.shared.model.elementGroupOf
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
 import com.hayse.sorcery.feature.cards.data.local.model.PrintingKey
 import com.hayse.sorcery.feature.cards.data.repository.toCard
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.SetEntry
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.CuriosaRow
 import com.hayse.sorcery.feature.collection.domain.model.OwnedCopy
@@ -52,28 +55,43 @@ object CollectionComputations {
     private fun ownedBySlug(entries: List<CollectionEntryEntity>): Map<String, List<CollectionEntryEntity>> =
         entries.filter { it.quantity > 0 }.groupBy { it.printingSlug }
 
-    fun collectionItems(
+    /**
+     * Une entrée par (carte, set d'impression) : la carte est dupliquée sous chaque set où elle
+     * possède une impression. Les copies et le total sont propres au set. Filtrée par possession,
+     * groupe d'élément et set optionnel.
+     */
+    fun collectionEntries(
         cards: List<CardWithPrintings>,
         entries: List<CollectionEntryEntity>,
         ownership: Ownership,
+        elementGroup: ElementGroup?,
+        setName: String?,
         imageUriForSlugs: (List<String>) -> String? = { null },
-    ): List<CollectionItem> {
+    ): List<SetEntry<CollectionItem>> {
         val owned = ownedBySlug(entries)
-        return cards.mapNotNull { cwp ->
-            val copies = cwp.printings
-                .flatMap { owned[it.slug].orEmpty() }
-                .map { OwnedCopy(it.printingSlug, it.finish, it.quantity) }
-            val total = copies.sumOf { it.quantity }
+        val result = mutableListOf<SetEntry<CollectionItem>>()
+        for (cwp in cards) {
             val card = cwp.toCard(imageUriForSlugs)
+            if (elementGroup != null && elementGroupOf(card.elements) != elementGroup) continue
             val maxCopies = card.rarity?.maxCopies ?: Int.MAX_VALUE
-            val keep = when (ownership) {
-                Ownership.All -> true
-                Ownership.Owned -> total > 0
-                Ownership.Missing -> total == 0
-                Ownership.Surplus -> total > maxCopies
+            val printingsBySet = cwp.printings.groupBy { it.setName }
+            val sets = if (setName != null) listOf(setName) else printingsBySet.keys.toList()
+            for (set in sets) {
+                val prts = printingsBySet[set].orEmpty()
+                if (prts.isEmpty()) continue
+                val copies = prts.flatMap { owned[it.slug].orEmpty() }
+                    .map { OwnedCopy(it.printingSlug, it.finish, it.quantity) }
+                val total = copies.sumOf { it.quantity }
+                val keep = when (ownership) {
+                    Ownership.All -> true
+                    Ownership.Owned -> total > 0
+                    Ownership.Missing -> total == 0
+                    Ownership.Surplus -> total > maxCopies
+                }
+                if (keep) result += SetEntry(set, card, CollectionItem(card, copies, total))
             }
-            if (keep) CollectionItem(card, copies, total) else null
         }
+        return result
     }
 
     fun setCompletion(

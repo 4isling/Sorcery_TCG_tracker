@@ -1,6 +1,7 @@
 package com.hayse.sorcery.feature.collection.ui.viewmodel.state
 
 import com.hayse.sorcery.feature.cards.domain.model.Card
+import com.hayse.sorcery.feature.cards.domain.model.GridRow
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.model.CollectionItem
 import com.hayse.sorcery.feature.collection.domain.model.ImportReport
@@ -12,7 +13,7 @@ enum class CollectionTab { Collection, Completion, Surplus }
 data class CollectionViewState(
     val tab: CollectionTab = CollectionTab.Collection,
     val filter: CollectionFilter = CollectionFilter(),
-    val items: List<CollectionItem> = emptyList(),
+    val rows: List<GridRow<CollectionItem>> = emptyList(),
     val completions: List<SetCompletion> = emptyList(),
     val surplus: List<SurplusCard> = emptyList(),
     val availableTypes: List<String> = emptyList(),
@@ -22,4 +23,7 @@ data class CollectionViewState(
     val missing: List<Card> = emptyList(),
     val importing: Boolean = false,
     val report: ImportReport? = null,
-)
+) {
+    val cardNames: List<String>
+        get() = rows.filterIsInstance<GridRow.Cell<CollectionItem>>().map { it.card.name }.distinct()
+}

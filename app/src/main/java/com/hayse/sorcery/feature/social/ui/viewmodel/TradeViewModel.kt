@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -46,6 +47,7 @@ class TradeViewModel(
             .flatMapLatest { query ->
                 if (query.isBlank()) flowOf(emptyList())
                 else cardRepository.observeCards(CardFilter(query = query))
+                    .map { entries -> entries.map { it.card }.distinctBy { it.name } }
             }
             .onEach { results -> _state.update { it.copy(addWantedResults = results.take(MAX_RESULTS)) } }
             .launchIn(viewModelScope)
