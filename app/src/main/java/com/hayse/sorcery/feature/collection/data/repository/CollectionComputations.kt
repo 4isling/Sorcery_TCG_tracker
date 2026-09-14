@@ -1,8 +1,7 @@
 package com.hayse.sorcery.feature.collection.data.repository
 
-import com.hayse.sorcery.core.shared.model.ElementGroup
+import com.hayse.sorcery.core.shared.model.ElementSelection
 import com.hayse.sorcery.core.shared.model.Ownership
-import com.hayse.sorcery.core.shared.model.elementGroupOf
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
 import com.hayse.sorcery.feature.cards.data.local.model.PrintingKey
@@ -64,7 +63,7 @@ object CollectionComputations {
         cards: List<CardWithPrintings>,
         entries: List<CollectionEntryEntity>,
         ownership: Ownership,
-        elementGroup: ElementGroup?,
+        element: ElementSelection,
         setName: String?,
         imageUriForSlugs: (List<String>) -> String? = { null },
     ): List<SetEntry<CollectionItem>> {
@@ -72,7 +71,7 @@ object CollectionComputations {
         val result = mutableListOf<SetEntry<CollectionItem>>()
         for (cwp in cards) {
             val card = cwp.toCard(imageUriForSlugs)
-            if (elementGroup != null && elementGroupOf(card.elements) != elementGroup) continue
+            if (!element.matches(card.elements)) continue
             val maxCopies = card.rarity?.maxCopies ?: Int.MAX_VALUE
             val printingsBySet = cwp.printings.groupBy { it.setName }
             val sets = if (setName != null) listOf(setName) else printingsBySet.keys.toList()

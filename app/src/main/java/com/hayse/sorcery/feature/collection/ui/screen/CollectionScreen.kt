@@ -280,9 +280,9 @@ private fun CollectionFilters(
     ) {
         QuickFilterChips(
             ownership = state.filter.ownership,
-            element = state.filter.elementGroup,
+            element = state.filter.element,
             onOwnership = viewModel::setOwnership,
-            onElement = viewModel::setElementGroup,
+            onElement = viewModel::toggleElement,
         )
         AdvancedFilters(
             rarity = state.filter.rarity,

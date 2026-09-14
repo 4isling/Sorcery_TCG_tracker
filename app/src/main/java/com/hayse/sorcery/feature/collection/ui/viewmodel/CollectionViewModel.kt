@@ -75,7 +75,7 @@ class CollectionViewModel(
 
     fun setQuery(query: String) = _filter.update { it.copy(query = query) }
     fun setOwnership(ownership: Ownership) = _filter.update { it.copy(ownership = ownership) }
-    fun setElementGroup(group: ElementGroup?) = _filter.update { it.copy(elementGroup = group) }
+    fun toggleElement(group: ElementGroup) = _filter.update { it.copy(element = it.element.toggled(group)) }
     fun setType(type: String?) = _filter.update { it.copy(type = type) }
     fun setRarity(rarity: Rarity?) = _filter.update { it.copy(rarity = rarity) }
     fun setSet(setName: String?) = _filter.update { it.copy(setName = setName) }

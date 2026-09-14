@@ -1,7 +1,6 @@
 package com.hayse.sorcery.feature.cards.data.repository
 
 import com.hayse.sorcery.core.shared.model.Ownership
-import com.hayse.sorcery.core.shared.model.elementGroupOf
 import com.hayse.sorcery.feature.cards.data.local.CardCatalogSeeder
 import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
@@ -39,7 +38,7 @@ class CardRepositoryImpl(
             rows.asSequence()
                 .filter { filter.ownership == Ownership.All || keepByOwnership(it, quantityBySlug, filter.ownership) }
                 .flatMap { cwp -> toSetEntries(cwp, filter).asSequence() }
-                .filter { filter.elementGroup == null || elementGroupOf(it.card.elements) == filter.elementGroup }
+                .filter { filter.element.matches(it.card.elements) }
                 .toList()
         }
 

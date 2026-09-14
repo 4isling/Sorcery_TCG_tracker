@@ -9,14 +9,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,12 +30,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.R
+import com.hayse.sorcery.core.shared.model.ElementFilterMode
 import com.hayse.sorcery.core.shared.model.ElementGroup
+import com.hayse.sorcery.core.shared.model.ElementSelection
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.ProvideCardList
@@ -85,18 +93,18 @@ fun CardListScreen(
                     OwnershipChips(
                         selected = state.filter.ownership,
                         onSelect = viewModel::setOwnership,
+                        selectedSet = state.filter.setName,
+                        sets = state.availableSets,
+                        onSet = viewModel::setSet,
                     )
                     FilterBar(
-                        selectedElement = state.filter.elementGroup,
+                        element = state.filter.element,
                         selectedRarity = state.filter.rarity,
                         selectedType = state.filter.type,
-                        selectedSet = state.filter.setName,
                         types = state.availableTypes,
-                        sets = state.availableSets,
-                        onElement = viewModel::setElementGroup,
+                        onElement = viewModel::toggleElement,
                         onRarity = viewModel::setRarity,
                         onType = viewModel::setType,
-                        onSet = viewModel::setSet,
                     )
                 }
             }
@@ -132,7 +140,13 @@ fun CardListScreen(
 }
 
 @Composable
-private fun OwnershipChips(selected: Ownership, onSelect: (Ownership) -> Unit) {
+private fun OwnershipChips(
+    selected: Ownership,
+    onSelect: (Ownership) -> Unit,
+    selectedSet: String?,
+    sets: List<String>,
+    onSet: (String?) -> Unit,
+) {
     val spacing = LocalSpacing.current
     Row(
         modifier = Modifier
@@ -140,6 +154,7 @@ private fun OwnershipChips(selected: Ownership, onSelect: (Ownership) -> Unit) {
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = spacing.md),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Ownership.entries.forEach { ownership ->
             FilterChip(
@@ -148,6 +163,12 @@ private fun OwnershipChips(selected: Ownership, onSelect: (Ownership) -> Unit) {
                 label = { Text(ownershipLabel(ownership)) },
             )
         }
+        DropdownFilter(
+            label = selectedSet ?: stringResource(R.string.cards_filter_set),
+            options = sets,
+            selected = selectedSet,
+            onSelect = onSet,
+        )
     }
 }
 
@@ -161,16 +182,13 @@ private fun ownershipLabel(ownership: Ownership): String = when (ownership) {
 
 @Composable
 private fun FilterBar(
-    selectedElement: ElementGroup?,
+    element: ElementSelection,
     selectedRarity: Rarity?,
     selectedType: String?,
-    selectedSet: String?,
     types: List<String>,
-    sets: List<String>,
-    onElement: (ElementGroup?) -> Unit,
+    onElement: (ElementGroup) -> Unit,
     onRarity: (Rarity?) -> Unit,
     onType: (String?) -> Unit,
-    onSet: (String?) -> Unit,
 ) {
     val spacing = LocalSpacing.current
     var expanded by remember { mutableStateOf(false) }
@@ -190,9 +208,19 @@ private fun FilterBar(
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             ElementGroup.entries.forEach { group ->
+                val active = element.group == group
                 FilterChip(
-                    selected = selectedElement == group,
-                    onClick = { onElement(if (selectedElement == group) null else group) },
+                    selected = active,
+                    onClick = { onElement(group) },
+                    leadingIcon = if (active && element.mode == ElementFilterMode.Exclude) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Block,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
+                        }
+                    } else null,
                     label = { Text(group.name) },
                 )
             }
@@ -226,12 +254,6 @@ private fun FilterBar(
                     label = { Text(rarity.name) },
                 )
             }
-            DropdownFilter(
-                label = selectedSet ?: stringResource(R.string.cards_filter_set),
-                options = sets,
-                selected = selectedSet,
-                onSelect = onSet,
-            )
         }
     }
 }

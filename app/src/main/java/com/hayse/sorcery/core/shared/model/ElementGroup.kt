@@ -24,3 +24,28 @@ fun elementGroupOf(elements: List<Element>): ElementGroup = when {
         Element.Air -> ElementGroup.Air
     }
 }
+
+/** Sens d'un filtre par élément : ne garder que ce groupe, ou l'exclure. */
+enum class ElementFilterMode { Include, Exclude }
+
+/**
+ * Sélection tri-état d'un filtre par groupe d'élément :
+ * `group == null` = pas de filtre, `Include` = ce groupe uniquement, `Exclude` = tout sauf ce groupe.
+ */
+data class ElementSelection(
+    val group: ElementGroup? = null,
+    val mode: ElementFilterMode = ElementFilterMode.Include,
+) {
+    fun matches(elements: List<Element>): Boolean {
+        val target = group ?: return true
+        val isGroup = elementGroupOf(elements) == target
+        return if (mode == ElementFilterMode.Include) isGroup else !isGroup
+    }
+
+    /** Cycle sur un chip : autre groupe -> Include ; même groupe : Include -> Exclude -> aucun. */
+    fun toggled(clicked: ElementGroup): ElementSelection = when {
+        group != clicked -> ElementSelection(clicked, ElementFilterMode.Include)
+        mode == ElementFilterMode.Include -> ElementSelection(clicked, ElementFilterMode.Exclude)
+        else -> ElementSelection()
+    }
+}

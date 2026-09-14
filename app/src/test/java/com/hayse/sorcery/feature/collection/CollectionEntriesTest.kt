@@ -1,6 +1,8 @@
 package com.hayse.sorcery.feature.collection
 
 import com.hayse.sorcery.core.shared.model.ElementGroup
+import com.hayse.sorcery.core.shared.model.ElementFilterMode
+import com.hayse.sorcery.core.shared.model.ElementSelection
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.feature.collection.data.repository.CollectionComputations
 import org.junit.Assert.assertEquals
@@ -13,9 +15,9 @@ class CollectionEntriesTest {
         cards: List<com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings>,
         owned: List<com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity>,
         ownership: Ownership = Ownership.Owned,
-        elementGroup: ElementGroup? = null,
+        element: ElementSelection = ElementSelection(),
         setName: String? = null,
-    ) = CollectionComputations.collectionEntries(cards, owned, ownership, elementGroup, setName)
+    ) = CollectionComputations.collectionEntries(cards, owned, ownership, element, setName)
 
     @Test
     fun `une carte multi-set produit une entree par set d'impression`() {
@@ -107,8 +109,34 @@ class CollectionEntriesTest {
             CollectionFixtures.entry("site", quantity = 1),
             CollectionFixtures.entry("fireball", quantity = 1),
         )
-        val result = entries(cards, owned, elementGroup = ElementGroup.Neutral)
+        val result = entries(cards, owned, element = ElementSelection(ElementGroup.Neutral))
         assertEquals(listOf("Site"), result.map { it.payload.card.name })
+    }
+
+    @Test
+    fun `le filtre elementGroup Exclude retire le groupe cible`() {
+        val cards = listOf(
+            CollectionFixtures.cardWith(
+                "Site",
+                elements = "",
+                printings = listOf(CollectionFixtures.printing("site", "Site")),
+            ),
+            CollectionFixtures.cardWith(
+                "Fireball",
+                elements = "Fire",
+                printings = listOf(CollectionFixtures.printing("fireball", "Fireball")),
+            ),
+        )
+        val owned = listOf(
+            CollectionFixtures.entry("site", quantity = 1),
+            CollectionFixtures.entry("fireball", quantity = 1),
+        )
+        val result = entries(
+            cards,
+            owned,
+            element = ElementSelection(ElementGroup.Neutral, ElementFilterMode.Exclude),
+        )
+        assertEquals(listOf("Fireball"), result.map { it.payload.card.name })
     }
 
     @Test

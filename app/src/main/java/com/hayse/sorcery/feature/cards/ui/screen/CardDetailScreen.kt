@@ -1,8 +1,14 @@
 package com.hayse.sorcery.feature.cards.ui.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,13 +21,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.R
 import com.hayse.sorcery.core.shared.model.Element
@@ -107,16 +121,27 @@ private fun DetailContent(
             .padding(spacing.md),
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
+        // card.imageUri est résolu vers la 1re impression dont le .webp existe vraiment ;
+        // l'URI brute d'une impression peut pointer vers un visuel absent (promo sans image).
+        val imageUri = card.imageUri ?: detail.printings.firstOrNull()?.imageUri
+        var fullscreen by remember { mutableStateOf(false) }
         CardImage(
-            // card.imageUri est résolu vers la 1re impression dont le .webp existe vraiment ;
-            // l'URI brute d'une impression peut pointer vers un visuel absent (promo sans image).
-            imageUri = card.imageUri ?: detail.printings.firstOrNull()?.imageUri,
+            imageUri = imageUri,
             contentDescription = card.name,
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth(0.7f)
-                .align(Alignment.CenterHorizontally),
+                .aspectRatio(0.72f)
+                .align(Alignment.CenterHorizontally)
+                .clickable { fullscreen = true },
         )
+        if (fullscreen) {
+            FullscreenCardImage(
+                imageUri = imageUri,
+                contentDescription = card.name,
+                onDismiss = { fullscreen = false },
+            )
+        }
         SkinnedSectionTitle(
             text = card.name,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -153,6 +178,53 @@ private fun DetailContent(
         }
     }
     }
+    }
+}
+
+@Composable
+private fun FullscreenCardImage(
+    imageUri: String?,
+    contentDescription: String?,
+    onDismiss: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        var scale by remember { mutableStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f))
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onDismiss() },
+                        onDoubleTap = {
+                            scale = if (scale > 1f) 1f else 2f
+                            offset = Offset.Zero
+                        },
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+                        offset = if (scale > 1f) offset + pan else Offset.Zero
+                    }
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            CardImage(
+                imageUri = imageUri,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    },
+            )
+        }
     }
 }
 

@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hayse.sorcery.R
+import com.hayse.sorcery.core.shared.model.ElementFilterMode
 import com.hayse.sorcery.core.shared.model.ElementGroup
+import com.hayse.sorcery.core.shared.model.ElementSelection
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.composable.AdjustButton
@@ -128,9 +133,9 @@ private fun CompactStepper(value: Int, onValueChange: (Int) -> Unit) {
 @Composable
 fun QuickFilterChips(
     ownership: Ownership,
-    element: ElementGroup?,
+    element: ElementSelection,
     onOwnership: (Ownership) -> Unit,
-    onElement: (ElementGroup?) -> Unit,
+    onElement: (ElementGroup) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
@@ -156,9 +161,19 @@ fun QuickFilterChips(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ElementGroup.entries.forEach { entry ->
+                val active = element.group == entry
                 FilterChip(
-                    selected = element == entry,
-                    onClick = { onElement(if (element == entry) null else entry) },
+                    selected = active,
+                    onClick = { onElement(entry) },
+                    leadingIcon = if (active && element.mode == ElementFilterMode.Exclude) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Block,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
+                        }
+                    } else null,
                     label = { Text(entry.name) },
                 )
             }

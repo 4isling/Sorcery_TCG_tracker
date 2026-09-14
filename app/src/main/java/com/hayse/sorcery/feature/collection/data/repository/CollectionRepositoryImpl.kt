@@ -44,7 +44,7 @@ class CollectionRepositoryImpl(
                 cards = cards,
                 entries = entries,
                 ownership = filter.ownership,
-                elementGroup = filter.elementGroup,
+                element = filter.element,
                 setName = filter.setName,
                 imageUriForSlugs = imageResolver::imageUriForSlugs,
             )
