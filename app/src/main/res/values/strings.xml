@@ -155,7 +155,9 @@
     <string name="collection_no_surplus">Aucun surplus</string>
     <string name="collection_tab_collection">Collection</string>
     <string name="collection_tab_completion">Complétion</string>
-    <string name="collection_tab_surplus">Surplus</string>    <string name="cards_search_placeholder">Rechercher une carte</string>
+    <string name="collection_tab_surplus">Surplus</string>
+    <string name="collection_foil_owned">✦ %1$d foil</string>
+    <string name="cards_search_placeholder">Rechercher une carte</string>
     <string name="cards_empty">Aucune carte</string>
     <string name="cards_ownership_all">Toutes</string>
     <string name="cards_ownership_owned">Possédées</string>

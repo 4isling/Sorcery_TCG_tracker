@@ -20,6 +20,9 @@ import com.hayse.sorcery.feature.collection.domain.model.SurplusCard
  */
 object CollectionComputations {
 
+    private const val STANDARD_FINISH = "Standard"
+    private const val BOOSTER_PRODUCT = "Booster"
+
     private data class MatchKey(val name: String, val set: String, val finish: String, val product: String)
 
     /** Plan d'import : upserts à appliquer + comptes pour le rapport. */
@@ -81,13 +84,16 @@ object CollectionComputations {
                 val copies = prts.flatMap { owned[it.slug].orEmpty() }
                     .map { OwnedCopy(it.printingSlug, it.finish, it.quantity) }
                 val total = copies.sumOf { it.quantity }
+                val standardSlug =
+                    (prts.firstOrNull { it.finish == STANDARD_FINISH && it.product == BOOSTER_PRODUCT }
+                        ?: prts.firstOrNull { it.finish == STANDARD_FINISH })?.slug
                 val keep = when (ownership) {
                     Ownership.All -> true
                     Ownership.Owned -> total > 0
                     Ownership.Missing -> total == 0
                     Ownership.Surplus -> total > maxCopies
                 }
-                if (keep) result += SetEntry(set, card, CollectionItem(card, copies, total))
+                if (keep) result += SetEntry(set, card, CollectionItem(card, copies, total, standardSlug))
             }
         }
         return result

@@ -17,6 +17,8 @@ data class CollectionItem(
     val card: Card,
     val copies: List<OwnedCopy>,
     val totalQuantity: Int,
+    /** Slug de l'impression Standard du set : cible du stepper de la grille (les foils passent par le détail). */
+    val standardSlug: String? = null,
 )
 
 /** Avancement de collection sur un set (cartes distinctes possédées / total). */

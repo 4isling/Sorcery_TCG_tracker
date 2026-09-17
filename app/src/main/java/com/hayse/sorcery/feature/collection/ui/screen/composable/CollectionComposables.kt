@@ -81,29 +81,39 @@ fun SetCompletionRow(completion: SetCompletion, expanded: Boolean, onClick: () -
     }
 }
 
-/** Steppers compacts (un par copie possédée) pour ajuster les quantités depuis la grille collection. */
+/**
+ * Stepper compact de la grille collection : ajuste uniquement la version Standard du set (même à 0).
+ * Les autres finitions (foil/rainbow) sont en lecture seule ici et se règlent depuis le détail de la carte.
+ */
 @Composable
 fun CollectionQuantityStepper(
     item: CollectionItem,
     onAdjust: (slug: String, finish: String, delta: Int) -> Unit,
 ) {
-    if (item.copies.isEmpty()) return
+    val standardSlug = item.standardSlug ?: return
+    val standardQty = item.copies
+        .firstOrNull { it.slug == standardSlug && it.finish == STANDARD_FINISH }?.quantity ?: 0
+    val foilQty = item.totalQuantity - standardQty
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        item.copies.forEach { copy ->
-            if (item.copies.size > 1) {
-                Text(copy.finish, style = MaterialTheme.typography.labelSmall)
-            }
-            CompactStepper(
-                value = copy.quantity,
-                onValueChange = { newValue -> onAdjust(copy.slug, copy.finish, newValue - copy.quantity) },
+        CompactStepper(
+            value = standardQty,
+            onValueChange = { newValue -> onAdjust(standardSlug, STANDARD_FINISH, newValue - standardQty) },
+        )
+        if (foilQty > 0) {
+            Text(
+                text = stringResource(R.string.collection_foil_owned, foilQty),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
+
+private const val STANDARD_FINISH = "Standard"
 
 @Composable
 private fun CompactStepper(value: Int, onValueChange: (Int) -> Unit) {

@@ -83,6 +83,9 @@ import org.koin.androidx.compose.koinViewModel
 
 private val CardGridColumns = GridCells.Adaptive(minSize = 120.dp)
 
+// Grille Collection : cartes plus grandes (image + stepper standard en pied).
+private val CollectionCardColumns = GridCells.Adaptive(minSize = 160.dp)
+
 @Composable
 fun CollectionScreen(
     onCardClick: (String) -> Unit,
@@ -182,7 +185,7 @@ private fun CollectionTabContent(
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
-            columns = CardGridColumns,
+            columns = CollectionCardColumns,
             contentPadding = PaddingValues(spacing.md),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.sm),
@@ -256,7 +259,7 @@ private fun ExpandedCollectionTabContent(
             }
         } else {
             LazyVerticalGrid(
-                columns = CardGridColumns,
+                columns = CollectionCardColumns,
                 contentPadding = PaddingValues(spacing.md),
                 horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
