@@ -7,6 +7,8 @@ import com.hayse.sorcery.feature.cards.ui.viewmodel.state.CardDetailViewState
 import com.hayse.sorcery.feature.collection.domain.usecase.AdjustQuantityUseCase
 import com.hayse.sorcery.feature.collection.domain.usecase.ObserveOwnedForCardUseCase
 import com.hayse.sorcery.feature.collection.domain.usecase.SetQuantityUseCase
+import com.hayse.sorcery.feature.social.domain.usecase.ObserveWantedUseCase
+import com.hayse.sorcery.feature.social.domain.usecase.SetWantedUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +23,8 @@ class CardDetailViewModel(
     private val observeOwned: ObserveOwnedForCardUseCase,
     private val setQuantityUseCase: SetQuantityUseCase,
     private val adjustQuantityUseCase: AdjustQuantityUseCase,
+    private val observeWanted: ObserveWantedUseCase,
+    private val setWantedUseCase: SetWantedUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CardDetailViewState())
@@ -37,6 +41,17 @@ class CardDetailViewModel(
                 }
             }
             .launchIn(viewModelScope)
+        observeWanted()
+            .onEach { items ->
+                _state.update { st ->
+                    st.copy(
+                        wanted = items
+                            .filter { it.card.name == name }
+                            .associate { (it.printing.slug to it.printing.finish) to it.wantedQty },
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun adjust(slug: String, finish: String, delta: Int) =
@@ -44,4 +59,7 @@ class CardDetailViewModel(
 
     fun setQuantity(slug: String, finish: String, quantity: Int) =
         viewModelScope.launch { setQuantityUseCase(slug, finish, quantity) }
+
+    fun setWanted(slug: String, finish: String, quantity: Int) =
+        viewModelScope.launch { setWantedUseCase(slug, finish, quantity) }
 }

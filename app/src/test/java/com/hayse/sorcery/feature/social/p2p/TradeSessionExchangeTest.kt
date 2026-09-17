@@ -1,11 +1,9 @@
 package com.hayse.sorcery.feature.social.p2p
 
 import com.hayse.sorcery.feature.social.data.p2p.DecodeResult
-import com.hayse.sorcery.feature.social.data.p2p.MatchComputations
 import com.hayse.sorcery.feature.social.data.p2p.TradePayloadCodec
 import com.hayse.sorcery.feature.social.data.p2p.model.PayloadEntry
 import com.hayse.sorcery.feature.social.data.p2p.model.TradePayload
-import com.hayse.sorcery.feature.social.domain.model.MatchLine
 import com.hayse.sorcery.feature.social.domain.p2p.LocalTransport
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -35,22 +33,15 @@ class TradeSessionExchangeTest {
     }
 
     @Test
-    fun `les deux cotes calculent des matches symetriques apres echange`() = runBlocking {
+    fun `les payloads transitent sans perte par le transport`() = runBlocking {
         val (aTransport, bTransport) = FakeLocalTransport.linkedPair()
 
-        // Chaque côté envoie son payload sérialisé.
+        // Chaque côté envoie son payload sérialisé ; l'autre le reçoit à l'identique.
         aTransport.send(TradePayloadCodec.encode(alice))
         bTransport.send(TradePayloadCodec.encode(bob))
 
-        val aliceView = MatchComputations.compute(mine = alice, peer = receive(aTransport))
-        val bobView = MatchComputations.compute(mine = bob, peer = receive(bTransport))
-
-        assertEquals(listOf(MatchLine("slug-a", "standard", 1)), aliceView.iCanGive)
-        assertEquals(listOf(MatchLine("slug-b", "foil", 1)), aliceView.iCanReceive)
-        assertEquals("Bob", aliceView.peerPseudo)
-
-        assertEquals(aliceView.iCanGive, bobView.iCanReceive)
-        assertEquals(aliceView.iCanReceive, bobView.iCanGive)
+        assertEquals(bob, receive(aTransport))
+        assertEquals(alice, receive(bTransport))
     }
 
     @Test

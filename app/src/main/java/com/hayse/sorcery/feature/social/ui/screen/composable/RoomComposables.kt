@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,10 +50,12 @@ import com.hayse.sorcery.core.ui.composable.CountBadge
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.social.domain.model.MatchLine
+import com.hayse.sorcery.feature.social.domain.model.SuggestionReason
 import com.hayse.sorcery.feature.social.domain.model.TradeCardLine
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.OfferView
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomViewState
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.SuggestionCardLine
 
 private val TileWidth = 128.dp
 
@@ -104,6 +105,7 @@ fun RoomInterior(
                 RoomTab.Chat -> ChatTab(state.messages, onSendChat)
                 RoomTab.PeerCollection -> PeerCollectionTab(state, onCardClick, onShareCollection, onShareLists)
                 RoomTab.Trade -> TradeTab(state, onPropose, onSaveComposed)
+                RoomTab.Suggestions -> SuggestionsTab(state, onPropose)
             }
         }
     }
@@ -242,13 +244,6 @@ private fun TradeTab(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = spacing.sm),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
-        state.suggestions?.takeIf { it.hasAnyMatch }?.let { match ->
-            SuggestionsCard(
-                giveCount = match.iCanGive.sumOf { it.quantity },
-                receiveCount = match.iCanReceive.sumOf { it.quantity },
-            )
-        }
-
         SelectionRow(
             title = stringResource(R.string.room_i_give),
             lines = state.myCollection,
@@ -288,22 +283,131 @@ private fun TradeTab(
     }
 }
 
+/**
+ * Onglet Suggestions : échanges calculés automatiquement depuis les collections complètes
+ * (surplus / « à échanger » ↔ besoins priorisés). Sélection par stepper puis « Proposer ».
+ */
 @Composable
-private fun SuggestionsCard(giveCount: Int, receiveCount: Int) {
+private fun SuggestionsTab(
+    state: RoomViewState,
+    onPropose: (List<MatchLine>, List<MatchLine>) -> Unit,
+) {
     val spacing = LocalSpacing.current
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.md)) {
-        Column(
-            modifier = Modifier.padding(spacing.md),
-            verticalArrangement = Arrangement.spacedBy(spacing.xs),
+    val result = state.suggestions
+    if (result == null || !result.hasAny) {
+        EmptyState(title = stringResource(R.string.suggestion_empty))
+        return
+    }
+
+    val give = remember { mutableStateMapOf<String, Int>() }
+    val receive = remember { mutableStateMapOf<String, Int>() }
+    val giveLines = buildSuggestionLines(result.iCanGive, give)
+    val receiveLines = buildSuggestionLines(result.iCanReceive, receive)
+    val canSubmit = giveLines.isNotEmpty() || receiveLines.isNotEmpty()
+
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(spacing.md),
+    ) {
+        SuggestionSection(
+            title = stringResource(R.string.suggestion_give),
+            lines = result.iCanGive,
+            selection = give,
+            emptyText = stringResource(R.string.suggestion_none_give),
+        )
+        SuggestionSection(
+            title = stringResource(R.string.suggestion_receive),
+            lines = result.iCanReceive,
+            selection = receive,
+            emptyText = stringResource(R.string.suggestion_none_receive),
+        )
+        androidx.compose.material3.Button(
+            onClick = {
+                onPropose(giveLines, receiveLines)
+                give.clear()
+                receive.clear()
+            },
+            enabled = canSubmit,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.md),
         ) {
-            Text(stringResource(R.string.room_suggestions), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = stringResource(R.string.room_suggestions_summary, giveCount, receiveCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(stringResource(R.string.room_propose))
         }
     }
+}
+
+@Composable
+private fun SuggestionSection(
+    title: String,
+    lines: List<SuggestionCardLine>,
+    selection: androidx.compose.runtime.snapshots.SnapshotStateMap<String, Int>,
+    emptyText: String,
+) {
+    val spacing = LocalSpacing.current
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = spacing.md),
+        )
+        if (lines.isEmpty()) {
+            Text(
+                text = emptyText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = spacing.md),
+            )
+        } else {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = spacing.md),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+            ) {
+                items(lines, key = { it.line.printing.slug }) { suggestion ->
+                    val line = suggestion.line
+                    val selected = selection[line.printing.slug] ?: 0
+                    Column(Modifier.width(TileWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+                        CardGridItem(
+                            imageUri = line.printing.imageUri,
+                            name = line.card.name,
+                            onClick = {},
+                            badge = { if (selected > 0) CountBadge("×$selected") },
+                        )
+                        Text(
+                            text = suggestionReasonLabel(suggestion.reason),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                        Text(
+                            text = "${line.printing.finish} · ${line.quantity}",
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        CompactStepperPublic(
+                            value = selected,
+                            min = 0,
+                            max = line.quantity,
+                            onValueChange = { selection[line.printing.slug] = it },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun suggestionReasonLabel(reason: SuggestionReason): String = when (reason) {
+    SuggestionReason.Wanted -> stringResource(R.string.suggestion_reason_wanted)
+    SuggestionReason.CompletesSet -> stringResource(R.string.suggestion_reason_set)
+    SuggestionReason.Missing -> stringResource(R.string.suggestion_reason_missing)
+}
+
+private fun buildSuggestionLines(
+    lines: List<SuggestionCardLine>,
+    selection: Map<String, Int>,
+): List<MatchLine> = lines.mapNotNull { suggestion ->
+    val printing = suggestion.line.printing
+    val qty = selection[printing.slug]?.takeIf { it > 0 } ?: return@mapNotNull null
+    MatchLine(printing.slug, printing.finish, qty)
 }
 
 @Composable
@@ -431,4 +535,5 @@ private fun roomTabLabel(tab: RoomTab): String = when (tab) {
     RoomTab.Chat -> stringResource(R.string.room_tab_chat)
     RoomTab.PeerCollection -> stringResource(R.string.room_tab_peer_collection)
     RoomTab.Trade -> stringResource(R.string.room_tab_trade)
+    RoomTab.Suggestions -> stringResource(R.string.room_suggestions)
 }

@@ -1,6 +1,10 @@
 package com.hayse.sorcery.core.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -8,6 +12,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,28 +28,60 @@ import androidx.compose.ui.unit.dp
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 
 /** Tuile de carte réutilisable : image (ratio carte) + nom sous celle-ci, badge optionnel en coin. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CardGridItem(
     imageUri: String?,
     name: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    selected: Boolean = false,
+    dimmed: Boolean = false,
     badge: (@Composable BoxScope.() -> Unit)? = null,
     footer: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
+    val clickModifier = if (onLongClick != null) {
+        Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    } else {
+        Modifier.clickable(onClick = onClick)
+    }
     Column(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier.then(clickModifier),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
+            val imageShape = MaterialTheme.shapes.small
+            val selectionBorder = if (selected) {
+                Modifier.border(3.dp, MaterialTheme.colorScheme.primary, imageShape)
+            } else {
+                Modifier
+            }
             CardImage(
                 imageUri = imageUri,
                 contentDescription = name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.72f)
-                    .clip(MaterialTheme.shapes.small),
+                    .clip(imageShape)
+                    .then(selectionBorder),
             )
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(LocalSpacing.current.xs),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.small)
+                            .background(MaterialTheme.colorScheme.onPrimary),
+                    )
+                }
+            }
             if (badge != null) {
                 Box(
                     modifier = Modifier
@@ -54,6 +93,8 @@ fun CardGridItem(
         Text(
             text = name,
             style = MaterialTheme.typography.labelMedium,
+            color = if (dimmed) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            else MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

@@ -2,11 +2,12 @@ package com.hayse.sorcery.feature.social.ui.viewmodel
 
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
-import com.hayse.sorcery.feature.social.data.p2p.MatchComputations
+import com.hayse.sorcery.feature.social.data.p2p.TradeSuggestionComputations
 import com.hayse.sorcery.feature.social.data.p2p.model.PayloadEntry
 import com.hayse.sorcery.feature.social.data.p2p.model.RoomMessage
 import com.hayse.sorcery.feature.social.data.p2p.model.TradePayload
 import com.hayse.sorcery.feature.social.domain.model.MatchLine
+import com.hayse.sorcery.feature.social.domain.model.SuggestionLine
 import com.hayse.sorcery.feature.social.domain.model.TradeCardLine
 import com.hayse.sorcery.feature.social.domain.repository.CardCatalog
 import com.hayse.sorcery.feature.social.domain.repository.SavedTradeRepository
@@ -15,6 +16,8 @@ import com.hayse.sorcery.feature.social.ui.viewmodel.state.ChatLine
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.OfferView
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomViewState
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.SuggestionCardLine
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.SuggestionResultUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -46,6 +49,12 @@ class RoomConversationEngine(
     /** Ma dernière charge utile (listes), pour recalculer les suggestions à l'arrivée des listes du pair. */
     private var myPayload: TradePayload = TradePayload()
 
+    /** Ma collection complète et celle du pair, mémorisées pour recalculer les suggestions. */
+    private var myCollection: List<PayloadEntry> = emptyList()
+    private var peerCollection: List<PayloadEntry> = emptyList()
+    private var peerTradeable: List<PayloadEntry> = emptyList()
+    private var peerWanted: List<PayloadEntry> = emptyList()
+
     /** Offres que j'ai proposées, indexées par id, de mon point de vue (à appliquer si acceptées). */
     private val outgoingOffers = HashMap<String, Pair<List<MatchLine>, List<MatchLine>>>()
 
@@ -62,8 +71,10 @@ class RoomConversationEngine(
         val tradeable = tradeLists.currentTradeableCopies().map { PayloadEntry(it.slug, it.finish, it.quantity) }
         val wanted = tradeLists.currentWantedCopies().map { PayloadEntry(it.slug, it.finish, it.quantity) }
         myPayload = TradePayload(pseudo = pseudo, tradeable = tradeable, wanted = wanted)
+        myCollection = entries
         val resolved = catalog.resolve(entries.toMatchLines())
         state.update { it.copy(myCollection = resolved) }
+        recomputeSuggestions()
         return InitialPayload(entries, tradeable, wanted)
     }
 
@@ -76,18 +87,16 @@ class RoomConversationEngine(
                 state.update { it.copy(messages = it.messages + ChatLine(false, message.text, message.sentAt)) }
 
             is RoomMessage.CollectionSnapshot -> {
+                peerCollection = message.entries
                 val resolved = catalog.resolve(message.entries.toMatchLines())
                 state.update { it.copy(peerCollection = resolved) }
+                recomputeSuggestions()
             }
 
             is RoomMessage.TradeLists -> {
-                val peerPayload = TradePayload(
-                    pseudo = state.value.peerPseudo,
-                    tradeable = message.tradeable,
-                    wanted = message.wanted,
-                )
-                val match = MatchComputations.compute(myPayload, peerPayload)
-                state.update { it.copy(suggestions = match) }
+                peerTradeable = message.tradeable
+                peerWanted = message.wanted
+                recomputeSuggestions()
             }
 
             is RoomMessage.TradeOffer -> {
@@ -122,8 +131,10 @@ class RoomConversationEngine(
     fun shareCollection() {
         scope.launch {
             val entries = currentCollectionEntries()
+            myCollection = entries
             state.update { it.copy(myCollection = catalog.resolve(entries.toMatchLines())) }
             send(RoomMessage.CollectionSnapshot(entries))
+            recomputeSuggestions()
         }
     }
 
@@ -134,6 +145,37 @@ class RoomConversationEngine(
             val wanted = tradeLists.currentWantedCopies().map { PayloadEntry(it.slug, it.finish, it.quantity) }
             myPayload = myPayload.copy(tradeable = tradeable, wanted = wanted)
             send(RoomMessage.TradeLists(tradeable, wanted))
+            recomputeSuggestions()
+        }
+    }
+
+    /** Recalcule les suggestions depuis les collections complètes + le catalogue local, puis résout. */
+    private fun recomputeSuggestions() {
+        scope.launch {
+            val cat = catalog.suggestionCatalog()
+            val result = TradeSuggestionComputations.compute(
+                peerPseudo = state.value.peerPseudo,
+                myCollection = myCollection,
+                peerCollection = peerCollection,
+                myTradeable = myPayload.tradeable,
+                myWanted = myPayload.wanted,
+                peerTradeable = peerTradeable,
+                peerWanted = peerWanted,
+                catalog = cat,
+            )
+            val give = resolveSuggestions(result.iCanGive)
+            val receive = resolveSuggestions(result.iCanReceive)
+            state.update { it.copy(suggestions = SuggestionResultUi(give, receive)) }
+        }
+    }
+
+    /** Résout des [SuggestionLine] en cartes affichables tout en conservant la raison. */
+    private suspend fun resolveSuggestions(lines: List<SuggestionLine>): List<SuggestionCardLine> {
+        if (lines.isEmpty()) return emptyList()
+        val resolved = catalog.resolve(lines.map { MatchLine(it.slug, it.finish, it.quantity) })
+            .associateBy { it.printing.slug }
+        return lines.mapNotNull { line ->
+            resolved[line.slug]?.let { SuggestionCardLine(it, line.reason) }
         }
     }
 
@@ -173,10 +215,14 @@ class RoomConversationEngine(
         scope.launch { savedTrades.saveTrade(peer, iGive, iReceive) }
     }
 
-    /** Réinitialise l'état interne (offres en attente, listes). */
+    /** Réinitialise l'état interne (offres en attente, listes, collections mémorisées). */
     fun reset() {
         outgoingOffers.clear()
         myPayload = TradePayload()
+        myCollection = emptyList()
+        peerCollection = emptyList()
+        peerTradeable = emptyList()
+        peerWanted = emptyList()
     }
 
     private suspend fun applyToCollection(iGive: List<MatchLine>, iReceive: List<MatchLine>) {

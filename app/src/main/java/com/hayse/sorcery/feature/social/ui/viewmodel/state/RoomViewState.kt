@@ -1,14 +1,28 @@
 package com.hayse.sorcery.feature.social.ui.viewmodel.state
 
+import com.hayse.sorcery.feature.social.domain.model.SuggestionReason
 import com.hayse.sorcery.feature.social.domain.model.TradeCardLine
-import com.hayse.sorcery.feature.social.domain.model.TradeMatch
 import com.hayse.sorcery.feature.social.domain.p2p.PairingRole
 
 /** Étape de vie de la room 1:1. */
 enum class RoomPhase { Pairing, Connecting, InRoom, Failed }
 
 /** Onglets internes affichés une fois la room ouverte. */
-enum class RoomTab { Chat, PeerCollection, Trade }
+enum class RoomTab { Chat, PeerCollection, Trade, Suggestions }
+
+/** Une carte suggérée à l'échange, résolue pour l'affichage. */
+data class SuggestionCardLine(
+    val line: TradeCardLine,
+    val reason: SuggestionReason,
+)
+
+/** Suggestions calculées depuis les collections complètes, résolues pour l'affichage. */
+data class SuggestionResultUi(
+    val iCanGive: List<SuggestionCardLine>,
+    val iCanReceive: List<SuggestionCardLine>,
+) {
+    val hasAny: Boolean get() = iCanGive.isNotEmpty() || iCanReceive.isNotEmpty()
+}
 
 /** Cause d'échec d'une room, pour un message clair à l'utilisateur. */
 enum class RoomFailure { TRANSPORT, INCOMPATIBLE_VERSION }
@@ -44,7 +58,7 @@ data class OfferView(
  * @param messages fil de discussion.
  * @param myCollection ma collection résolue (pour composer une offre).
  * @param peerCollection collection du pair résolue (pour l'afficher / composer).
- * @param suggestions correspondances calculées à partir des listes (aide optionnelle).
+ * @param suggestions échanges suggérés calculés depuis les collections complètes (aide optionnelle).
  * @param incomingOffer offre reçue en attente de réponse (`null` = aucune).
  * @param failure cause d'échec quand [phase] vaut [RoomPhase.Failed].
  */
@@ -62,7 +76,7 @@ data class RoomViewState(
     val messages: List<ChatLine> = emptyList(),
     val myCollection: List<TradeCardLine> = emptyList(),
     val peerCollection: List<TradeCardLine> = emptyList(),
-    val suggestions: TradeMatch? = null,
+    val suggestions: SuggestionResultUi? = null,
     val incomingOffer: OfferView? = null,
     val failure: RoomFailure? = null,
 ) {

@@ -20,6 +20,7 @@ import com.hayse.sorcery.feature.social.domain.model.TradeableItem
 import com.hayse.sorcery.feature.social.domain.model.WantedCopy
 import com.hayse.sorcery.feature.social.domain.model.WantedItem
 import com.hayse.sorcery.feature.social.domain.repository.CardCatalog
+import com.hayse.sorcery.feature.social.domain.repository.SuggestionCatalog
 import com.hayse.sorcery.feature.social.domain.repository.SavedTradeRepository
 import com.hayse.sorcery.feature.social.domain.repository.TradeListRepository
 import com.hayse.sorcery.feature.social.ui.viewmodel.RoomConversationEngine
@@ -191,6 +192,9 @@ private object IdentityCatalog : CardCatalog {
                 quantity = line.quantity,
             )
         }
+
+    override suspend fun suggestionCatalog(): SuggestionCatalog =
+        SuggestionCatalog(emptyMap(), emptyMap(), emptyMap(), emptyMap(), emptyMap())
 }
 
 /** Enregistre les deltas ; `observeCollection` émet une liste vide pour que `shareCollection` n'échoue pas. */

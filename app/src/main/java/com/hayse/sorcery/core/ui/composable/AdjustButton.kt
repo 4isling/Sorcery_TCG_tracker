@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ fun AdjustButton(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
+    symbolStyle: TextStyle = MaterialTheme.typography.titleLarge,
     container: Color = MaterialTheme.colorScheme.secondaryContainer,
     content: Color = MaterialTheme.colorScheme.onSecondaryContainer,
 ) {
@@ -41,7 +43,7 @@ fun AdjustButton(
             .semantics { this.contentDescription = contentDescription },
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(text = symbol, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
+            Text(text = symbol, textAlign = TextAlign.Center, style = symbolStyle)
         }
     }
 }

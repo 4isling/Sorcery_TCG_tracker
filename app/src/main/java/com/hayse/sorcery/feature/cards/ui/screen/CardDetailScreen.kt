@@ -74,7 +74,9 @@ fun CardDetailScreen(
         else -> DetailContent(
             detail = state.detail!!,
             owned = state.owned,
+            wanted = state.wanted,
             onAdjust = viewModel::adjust,
+            onSetWanted = viewModel::setWanted,
             modifier = modifier,
         )
     }
@@ -104,7 +106,9 @@ fun CardDetailPager(name: String, modifier: Modifier = Modifier) {
 private fun DetailContent(
     detail: CardDetail,
     owned: Map<Pair<String, String>, Int>,
+    wanted: Map<Pair<String, String>, Int>,
     onAdjust: (slug: String, finish: String, delta: Int) -> Unit,
+    onSetWanted: (slug: String, finish: String, quantity: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val card = detail.card
@@ -169,12 +173,36 @@ private fun DetailContent(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        detail.printings.forEach { printing ->
-            PrintingRow(
-                printing = printing,
-                quantity = owned[printing.slug to printing.finish] ?: 0,
-                onAdjust = { delta -> onAdjust(printing.slug, printing.finish, delta) },
+        // Groupé par set : trait épais coloré entre sets, trait fin encart entre versions d'un même set.
+        detail.printings.groupBy { it.setName }.entries.forEachIndexed { setIndex, (setName, printings) ->
+            if (setIndex > 0) {
+                HorizontalDivider(
+                    thickness = 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = spacing.sm),
+                )
+            }
+            Text(
+                text = setName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
+            printings.forEachIndexed { i, printing ->
+                if (i > 0) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(horizontal = spacing.lg),
+                    )
+                }
+                PrintingRow(
+                    printing = printing,
+                    quantity = owned[printing.slug to printing.finish] ?: 0,
+                    wantedQuantity = wanted[printing.slug to printing.finish] ?: 0,
+                    onAdjust = { delta -> onAdjust(printing.slug, printing.finish, delta) },
+                    onSetWanted = { qty -> onSetWanted(printing.slug, printing.finish, qty) },
+                )
+            }
         }
     }
     }
@@ -265,29 +293,89 @@ private fun ThresholdsRow(thresholds: Map<Element, Int>) {
 }
 
 @Composable
-private fun PrintingRow(printing: Printing, quantity: Int, onAdjust: (Int) -> Unit) {
+private fun PrintingRow(
+    printing: Printing,
+    quantity: Int,
+    wantedQuantity: Int,
+    onAdjust: (Int) -> Unit,
+    onSetWanted: (Int) -> Unit,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = "${printing.setName} · ${printing.finish} · ${printing.product}",
-                style = MaterialTheme.typography.bodyMedium,
+                text = printingVersionLabel(printing),
+                style = MaterialTheme.typography.titleMedium,
             )
             if (printing.artist.isNotBlank()) {
-                Text(
-                    text = stringResource(R.string.cards_artist, printing.artist),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row {
+                    Text(
+                        text = stringResource(R.string.cards_artist_label) + " : ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = printing.artist,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
-        CounterStepper(
+        StepperWithLabel(
+            label = stringResource(R.string.cards_detail_owned_label),
             value = quantity,
             onValueChange = { newValue -> onAdjust(newValue - quantity) },
+            accent = MaterialTheme.colorScheme.secondary,
+            container = MaterialTheme.colorScheme.secondaryContainer,
+            content = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        StepperWithLabel(
+            label = stringResource(R.string.cards_detail_wanted_label),
+            value = wantedQuantity,
+            onValueChange = onSetWanted,
+            accent = MaterialTheme.colorScheme.tertiary,
+            container = MaterialTheme.colorScheme.tertiaryContainer,
+            content = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+    }
+}
+
+/** Libellé de version : on omet le tirage de base « Booster » (c'est la version standard). */
+private fun printingVersionLabel(printing: Printing): String {
+    val parts = mutableListOf(printing.finish)
+    if (printing.product != "Booster") parts += printing.product.replace('_', ' ')
+    return parts.joinToString(" · ")
+}
+
+@Composable
+private fun StepperWithLabel(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    accent: Color,
+    container: Color,
+    content: Color,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = accent,
+        )
+        CounterStepper(
+            value = value,
+            onValueChange = onValueChange,
             min = 0,
+            buttonSize = 32.dp,
+            valueStyle = MaterialTheme.typography.titleMedium,
+            symbolStyle = MaterialTheme.typography.titleMedium,
+            buttonContainer = container,
+            buttonContent = content,
         )
     }
 }

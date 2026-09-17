@@ -17,6 +17,15 @@ interface CollectionDao {
 
     @Query(
         """
+        SELECT DISTINCT p.cardName FROM collection_entries e
+        JOIN printings p ON p.slug = e.printingSlug
+        WHERE e.quantity > 0
+        """
+    )
+    fun observeOwnedCardNames(): Flow<List<String>>
+
+    @Query(
+        """
         SELECT e.printingSlug AS printingSlug, e.finish AS finish, e.quantity AS quantity
         FROM collection_entries e
         JOIN printings p ON p.slug = e.printingSlug

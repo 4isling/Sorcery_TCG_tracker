@@ -163,6 +163,9 @@
     <string name="cards_ownership_owned">Possédées</string>
     <string name="cards_ownership_missing">Manquantes</string>
     <string name="cards_ownership_surplus">Surplus</string>
+    <string name="cards_want_add">Ajouter aux recherchées</string>
+    <string name="cards_selection_count">%1$d sélectionnée(s)</string>
+    <string name="cards_selection_clear">Effacer la sélection</string>
     <string name="cards_advanced_filters">Filtres avancés</string>
     <string name="cards_hide_advanced_filters">Masquer les filtres avancés</string>
     <string name="cards_filter_set">Set</string>
@@ -174,7 +177,9 @@
     <string name="cards_stat_defence">Déf</string>
     <string name="cards_stat_life">Vie</string>
     <string name="cards_thresholds">Seuils</string>
-    <string name="cards_artist">Illustration : %1$s</string>
+    <string name="cards_artist_label">Artiste</string>
+    <string name="cards_detail_owned_label">Possédée</string>
+    <string name="cards_detail_wanted_label">Recherchée</string>
     <string name="home_tile_cards">Cartes</string>
     <string name="home_tile_collection">Collection</string>
     <string name="home_tile_game_tracker">Suivi de partie</string>
@@ -291,7 +296,14 @@
     <string name="room_i_receive">Je reçois</string>
     <string name="room_no_collection">Ta collection est vide.</string>
     <string name="room_suggestions">Suggestions</string>
-    <string name="room_suggestions_summary">%1$d à donner · %2$d à recevoir</string>
+    <string name="suggestion_give">À donner</string>
+    <string name="suggestion_receive">À recevoir</string>
+    <string name="suggestion_none_give">Rien à proposer au pair pour l\'instant.</string>
+    <string name="suggestion_none_receive">Rien à recevoir du pair pour l\'instant.</string>
+    <string name="suggestion_empty">Aucune suggestion : partage ta collection et tes listes pour en générer.</string>
+    <string name="suggestion_reason_wanted">Recherchée</string>
+    <string name="suggestion_reason_set">Complète un set</string>
+    <string name="suggestion_reason_missing">Manquante</string>
     <string name="room_save_later">Sauvegarder</string>
     <string name="room_propose">Proposer</string>
     <string name="room_offer_title">Offre d\'échange</string>

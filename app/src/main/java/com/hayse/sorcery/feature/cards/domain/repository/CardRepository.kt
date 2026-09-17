@@ -13,6 +13,9 @@ interface CardRepository {
     /** Une entrée par (carte, set d'impression) pour le rangement par set. */
     fun observeCards(filter: CardFilter): Flow<List<SetEntry<Card>>>
 
+    /** Noms des cartes dont au moins une impression est possédée (quantité > 0). */
+    fun observeOwnedCardNames(): Flow<Set<String>>
+
     suspend fun getCard(name: String): CardDetail?
 
     suspend fun availableTypes(): List<String>

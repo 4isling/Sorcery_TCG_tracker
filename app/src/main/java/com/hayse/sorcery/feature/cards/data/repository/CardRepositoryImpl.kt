@@ -12,6 +12,7 @@ import com.hayse.sorcery.feature.cards.domain.repository.CardRepository
 import com.hayse.sorcery.feature.collection.data.local.dao.CollectionDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class CardRepositoryImpl(
     private val dao: CardDao,
@@ -65,6 +66,9 @@ class CardRepositoryImpl(
             }
         }
     }
+
+    override fun observeOwnedCardNames(): Flow<Set<String>> =
+        collectionDao.observeOwnedCardNames().map { it.toSet() }
 
     override suspend fun getCard(name: String): CardDetail? =
         dao.getCardWithPrintings(name)?.toDetail(imageResolver::imageUriForSlugs)

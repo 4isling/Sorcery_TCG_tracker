@@ -20,7 +20,15 @@ val cardsModule = module {
     factory { ObserveCardsUseCase(get()) }
     factory { GetCardDetailUseCase(get()) }
 
-    viewModel { CardBrowserViewModel(repository = get(), observeCards = get()) }
+    viewModel {
+        CardBrowserViewModel(
+            repository = get(),
+            observeCards = get(),
+            observeWanted = get(),
+            setWantedUseCase = get(),
+            getCardDetail = get(),
+        )
+    }
     viewModel { (name: String) ->
         CardDetailViewModel(
             name = name,
@@ -28,6 +36,8 @@ val cardsModule = module {
             observeOwned = get(),
             setQuantityUseCase = get(),
             adjustQuantityUseCase = get(),
+            observeWanted = get(),
+            setWantedUseCase = get(),
         )
     }
 }

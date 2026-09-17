@@ -7,4 +7,6 @@ data class CardDetailViewState(
     val detail: CardDetail? = null,
     /** Quantités possédées par (slug, finish) ; absent = 0. */
     val owned: Map<Pair<String, String>, Int> = emptyMap(),
+    /** Quantités recherchées par (slug, finish) ; absent = 0. */
+    val wanted: Map<Pair<String, String>, Int> = emptyMap(),
 )

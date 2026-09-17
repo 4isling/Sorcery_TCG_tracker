@@ -161,6 +161,9 @@
     <string name="cards_ownership_owned">En posesión</string>
     <string name="cards_ownership_missing">Faltantes</string>
     <string name="cards_ownership_surplus">Excedente</string>
+    <string name="cards_want_add">Añadir a buscadas</string>
+    <string name="cards_selection_count">%1$d seleccionadas</string>
+    <string name="cards_selection_clear">Borrar selección</string>
     <string name="cards_advanced_filters">Filtros avanzados</string>
     <string name="cards_hide_advanced_filters">Ocultar filtros avanzados</string>
     <string name="cards_filter_set">Set</string>
@@ -172,7 +175,9 @@
     <string name="cards_stat_defence">Def</string>
     <string name="cards_stat_life">Vida</string>
     <string name="cards_thresholds">Umbrales</string>
-    <string name="cards_artist">Ilustración: %1$s</string>
+    <string name="cards_artist_label">Artista</string>
+    <string name="cards_detail_owned_label">En posesión</string>
+    <string name="cards_detail_wanted_label">Buscada</string>
     <string name="home_tile_cards">Cartas</string>
     <string name="home_tile_collection">Colección</string>
     <string name="home_tile_game_tracker">Seguimiento de partida</string>
@@ -289,7 +294,14 @@
     <string name="room_i_receive">Recibo</string>
     <string name="room_no_collection">Tu colección está vacía.</string>
     <string name="room_suggestions">Sugerencias</string>
-    <string name="room_suggestions_summary">%1$d para dar · %2$d para recibir</string>
+    <string name="suggestion_give">Para dar</string>
+    <string name="suggestion_receive">Para recibir</string>
+    <string name="suggestion_none_give">Nada que ofrecer al par por ahora.</string>
+    <string name="suggestion_none_receive">Nada que recibir del par por ahora.</string>
+    <string name="suggestion_empty">Sin sugerencias: comparte tu colección y tus listas para generarlas.</string>
+    <string name="suggestion_reason_wanted">Buscada</string>
+    <string name="suggestion_reason_set">Completa un set</string>
+    <string name="suggestion_reason_missing">Faltante</string>
     <string name="room_save_later">Guardar</string>
     <string name="room_propose">Proponer</string>
     <string name="room_offer_title">Oferta de intercambio</string>

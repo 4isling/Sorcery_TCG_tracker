@@ -15,14 +15,21 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -88,6 +95,15 @@ fun CardListScreen(
             verticalArrangement = Arrangement.spacedBy(spacing.sm),
             modifier = modifier.fillMaxSize(),
         ) {
+            if (state.selectionActive) {
+                item(key = "__selection__", span = { GridItemSpan(maxLineSpan) }) {
+                    SelectionBar(
+                        count = state.selectedCardNames.size,
+                        onAddWanted = viewModel::addSelectedToWanted,
+                        onClear = viewModel::clearSelection,
+                    )
+                }
+            }
             item(key = "__filters__", span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     OwnershipChips(
@@ -126,10 +142,20 @@ fun CardListScreen(
                         ) { GroupLabelRow(row.text) }
 
                         is GridRow.Cell -> item(key = "${row.setName}_${row.card.name}") {
+                            val cardName = row.card.name
                             CardGridItem(
                                 imageUri = row.card.imageUri,
-                                name = row.card.name,
-                                onClick = { onCardClick(row.card.name) },
+                                name = cardName,
+                                onClick = {
+                                    if (state.selectionActive) viewModel.toggleSelected(cardName)
+                                    else onCardClick(cardName)
+                                },
+                                onLongClick = { viewModel.startSelection(cardName) },
+                                selected = cardName in state.selectedCardNames,
+                                dimmed = cardName !in state.ownedCardNames,
+                                badge = if (cardName in state.wantedCardNames) {
+                                    { WantedIndicator() }
+                                } else null,
                             )
                         }
                     }
@@ -252,6 +278,61 @@ private fun FilterBar(
                     selected = selectedRarity == rarity,
                     onClick = { onRarity(if (selectedRarity == rarity) null else rarity) },
                     label = { Text(rarity.name) },
+                )
+            }
+        }
+    }
+}
+
+/** Indicateur (lecture seule) « recherché » posé en coin de tuile : loupe. */
+@Composable
+private fun WantedIndicator() {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = Modifier.size(24.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Search,
+            contentDescription = stringResource(R.string.suggestion_reason_wanted),
+            modifier = Modifier.padding(4.dp),
+        )
+    }
+}
+
+/** Barre d'actions du mode sélection : nombre sélectionné, ajout au recherché, sortie. */
+@Composable
+private fun SelectionBar(count: Int, onAddWanted: () -> Unit, onClear: () -> Unit) {
+    val spacing = LocalSpacing.current
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = spacing.sm, vertical = spacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+        ) {
+            IconButton(onClick = onClear) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.cards_selection_clear))
+            }
+            Text(
+                text = stringResource(R.string.cards_selection_count, count),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Button(onClick = onAddWanted) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = stringResource(R.string.cards_want_add),
+                    modifier = Modifier.padding(start = spacing.xs),
                 )
             }
         }

@@ -161,6 +161,9 @@
     <string name="cards_ownership_owned">Owned</string>
     <string name="cards_ownership_missing">Missing</string>
     <string name="cards_ownership_surplus">Surplus</string>
+    <string name="cards_want_add">Add to wanted</string>
+    <string name="cards_selection_count">%1$d selected</string>
+    <string name="cards_selection_clear">Clear selection</string>
     <string name="cards_advanced_filters">Advanced filters</string>
     <string name="cards_hide_advanced_filters">Hide advanced filters</string>
     <string name="cards_filter_set">Set</string>
@@ -172,7 +175,9 @@
     <string name="cards_stat_defence">Def</string>
     <string name="cards_stat_life">Life</string>
     <string name="cards_thresholds">Thresholds</string>
-    <string name="cards_artist">Artwork: %1$s</string>
+    <string name="cards_artist_label">Artist</string>
+    <string name="cards_detail_owned_label">Owned</string>
+    <string name="cards_detail_wanted_label">Wanted</string>
     <string name="home_tile_cards">Cards</string>
     <string name="home_tile_collection">Collection</string>
     <string name="home_tile_game_tracker">Game tracker</string>
@@ -289,7 +294,14 @@
     <string name="room_i_receive">I receive</string>
     <string name="room_no_collection">Your collection is empty.</string>
     <string name="room_suggestions">Suggestions</string>
-    <string name="room_suggestions_summary">%1$d to give · %2$d to receive</string>
+    <string name="suggestion_give">To give</string>
+    <string name="suggestion_receive">To receive</string>
+    <string name="suggestion_none_give">Nothing to offer the peer yet.</string>
+    <string name="suggestion_none_receive">Nothing to receive from the peer yet.</string>
+    <string name="suggestion_empty">No suggestions: share your collection and lists to generate some.</string>
+    <string name="suggestion_reason_wanted">Wanted</string>
+    <string name="suggestion_reason_set">Completes a set</string>
+    <string name="suggestion_reason_missing">Missing</string>
     <string name="room_save_later">Save</string>
     <string name="room_propose">Propose</string>
     <string name="room_offer_title">Trade offer</string>

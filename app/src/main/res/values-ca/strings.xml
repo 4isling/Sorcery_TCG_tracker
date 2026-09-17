@@ -161,6 +161,9 @@
     <string name="cards_ownership_owned">En possessió</string>
     <string name="cards_ownership_missing">Que falten</string>
     <string name="cards_ownership_surplus">Excedent</string>
+    <string name="cards_want_add">Afegeix a cercades</string>
+    <string name="cards_selection_count">%1$d seleccionades</string>
+    <string name="cards_selection_clear">Esborra la selecció</string>
     <string name="cards_advanced_filters">Filtres avançats</string>
     <string name="cards_hide_advanced_filters">Amaga els filtres avançats</string>
     <string name="cards_filter_set">Set</string>
@@ -172,7 +175,9 @@
     <string name="cards_stat_defence">Def</string>
     <string name="cards_stat_life">Vida</string>
     <string name="cards_thresholds">Llindars</string>
-    <string name="cards_artist">Il·lustració: %1$s</string>
+    <string name="cards_artist_label">Artista</string>
+    <string name="cards_detail_owned_label">En possessió</string>
+    <string name="cards_detail_wanted_label">Cercada</string>
     <string name="home_tile_cards">Cartes</string>
     <string name="home_tile_collection">Col·lecció</string>
     <string name="home_tile_game_tracker">Seguiment de partida</string>
@@ -289,7 +294,14 @@
     <string name="room_i_receive">Rebo</string>
     <string name="room_no_collection">La teva col·lecció és buida.</string>
     <string name="room_suggestions">Suggeriments</string>
-    <string name="room_suggestions_summary">%1$d per donar · %2$d per rebre</string>
+    <string name="suggestion_give">Per donar</string>
+    <string name="suggestion_receive">Per rebre</string>
+    <string name="suggestion_none_give">Res a oferir al parell de moment.</string>
+    <string name="suggestion_none_receive">Res a rebre del parell de moment.</string>
+    <string name="suggestion_empty">Cap suggeriment: comparteix la teva col·lecció i les teves llistes per generar-ne.</string>
+    <string name="suggestion_reason_wanted">Cercada</string>
+    <string name="suggestion_reason_set">Completa un set</string>
+    <string name="suggestion_reason_missing">Falta</string>
     <string name="room_save_later">Desa</string>
     <string name="room_propose">Proposa</string>
     <string name="room_offer_title">Oferta d\'intercanvi</string>
