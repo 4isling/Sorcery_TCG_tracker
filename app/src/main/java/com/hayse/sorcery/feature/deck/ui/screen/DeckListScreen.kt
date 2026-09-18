@@ -106,7 +106,7 @@ private fun CreateDeckDialog(
     onConfirm: (String, DeckFormat) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
-    var format by remember { mutableStateOf(DeckFormat.Sorcery) }
+    var format by remember { mutableStateOf(DeckFormat.Constructed) }
     val spacing = LocalSpacing.current
 
     SorceryDialog(

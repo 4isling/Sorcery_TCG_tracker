@@ -27,18 +27,24 @@ data class DeckFormat(
     companion object {
         const val DEFAULT_COPY_LIMIT = 4
 
-        val Sorcery = DeckFormat(
-            id = "sorcery",
-            label = "Sorcery",
-            minSpellbook = 50,
+        val Constructed = DeckFormat(
+            id = "constructed",
+            label = "Constructed",
+            minSpellbook = 60,
             minAtlas = 30,
             maxAvatar = 1,
             bannedRarities = emptySet(),
             copyLimitOverride = null,
         )
 
-        val all: List<DeckFormat> = listOf(Sorcery)
+        val Poorcery = Constructed.copy(
+            id = "poorcery",
+            label = "Poorcery",
+            bannedRarities = setOf(Rarity.Elite, Rarity.Unique),
+        )
 
-        fun fromId(id: String): DeckFormat = all.firstOrNull { it.id == id } ?: Sorcery
+        val all: List<DeckFormat> = listOf(Constructed, Poorcery)
+
+        fun fromId(id: String): DeckFormat = all.firstOrNull { it.id == id } ?: Constructed
     }
 }

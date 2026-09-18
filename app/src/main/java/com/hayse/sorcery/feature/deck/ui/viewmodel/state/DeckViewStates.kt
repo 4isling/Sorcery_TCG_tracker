@@ -18,7 +18,7 @@ data class DeckEditorViewState(
     val loading: Boolean = true,
     val notFound: Boolean = false,
     val name: String = "",
-    val format: DeckFormat = DeckFormat.Sorcery,
+    val format: DeckFormat = DeckFormat.Constructed,
     val avatarSetName: String? = null,
     val avatar: DeckEntry? = null,
     val spellbook: List<DeckEntry> = emptyList(),
