@@ -10,6 +10,8 @@
     <string name="settings_app_name">Sorcery Tracker</string>
     <string name="settings_app_description">Aplicació complementària no oficial per a Sorcery: Contested Realm.</string>
     <string name="settings_version">Versió %1$s</string>
+    <string name="settings_author">Desenvolupat per Hayse</string>
+    <string name="settings_source_code">Codi font a GitHub</string>
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Clar</string>
     <string name="settings_theme_dark">Fosc</string>

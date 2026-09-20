@@ -10,6 +10,8 @@
     <string name="settings_app_name">Sorcery Tracker</string>
     <string name="settings_app_description">Unofficial companion app for Sorcery: Contested Realm.</string>
     <string name="settings_version">Version %1$s</string>
+    <string name="settings_author">Developed by Hayse</string>
+    <string name="settings_source_code">Source code on GitHub</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>

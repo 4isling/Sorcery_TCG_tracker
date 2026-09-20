@@ -10,6 +10,9 @@
     <string name="settings_app_name">Sorcery Tracker</string>
     <string name="settings_app_description">Application compagnon non officielle pour Sorcery: Contested Realm.</string>
     <string name="settings_version">Version %1$s</string>
+    <string name="settings_author">Développé par Hayse</string>
+    <string name="settings_source_code">Code source sur GitHub</string>
+    <string name="settings_source_url" translatable="false">https://github.com/4isling/Sorcery_TCG_tracker</string>
     <string name="settings_theme_system">Système</string>
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
