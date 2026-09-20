@@ -5,15 +5,19 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import com.hayse.sorcery.feature.game_tracker.data.local.GameHistorySerializer
 import com.hayse.sorcery.feature.game_tracker.data.local.GameStateSerializer
+import com.hayse.sorcery.feature.game_tracker.data.local.GameTimerSerializer
 import com.hayse.sorcery.feature.game_tracker.data.local.PlayerPrefsSerializer
 import com.hayse.sorcery.feature.game_tracker.data.local.model.GameHistoryData
 import com.hayse.sorcery.feature.game_tracker.data.local.model.GameStateData
+import com.hayse.sorcery.feature.game_tracker.data.local.model.GameTimerData
 import com.hayse.sorcery.feature.game_tracker.data.local.model.PlayerPrefsData
 import com.hayse.sorcery.feature.game_tracker.data.repository.GameHistoryRepositoryImpl
 import com.hayse.sorcery.feature.game_tracker.data.repository.GameSessionRepositoryImpl
+import com.hayse.sorcery.feature.game_tracker.data.repository.GameTimerRepositoryImpl
 import com.hayse.sorcery.feature.game_tracker.data.repository.PlayerPrefsRepositoryImpl
 import com.hayse.sorcery.feature.game_tracker.domain.repository.GameHistoryRepository
 import com.hayse.sorcery.feature.game_tracker.domain.repository.GameSessionRepository
+import com.hayse.sorcery.feature.game_tracker.domain.repository.GameTimerRepository
 import com.hayse.sorcery.feature.game_tracker.domain.repository.PlayerPrefsRepository
 import com.hayse.sorcery.feature.game_tracker.domain.usecase.AdjustManaUseCase
 import com.hayse.sorcery.feature.game_tracker.domain.usecase.ApplyDamageUseCase
@@ -41,6 +45,7 @@ import org.koin.dsl.module
 private val gameStateStore = named("game_state_store")
 private val gameHistoryStore = named("game_history_store")
 private val playerPrefsStore = named("player_prefs_store")
+private val gameTimerStore = named("game_timer_store")
 
 val gameTrackerModule = module {
     single<DataStore<GameStateData?>>(gameStateStore) {
@@ -61,10 +66,17 @@ val gameTrackerModule = module {
             produceFile = { androidContext().dataStoreFile("player_prefs.json") },
         )
     }
+    single<DataStore<GameTimerData?>>(gameTimerStore) {
+        DataStoreFactory.create(
+            serializer = GameTimerSerializer,
+            produceFile = { androidContext().dataStoreFile("game_timer.json") },
+        )
+    }
 
     single<GameSessionRepository> { GameSessionRepositoryImpl(get(gameStateStore)) }
     single<GameHistoryRepository> { GameHistoryRepositoryImpl(get(gameHistoryStore)) }
     single<PlayerPrefsRepository> { PlayerPrefsRepositoryImpl(get(playerPrefsStore)) }
+    single<GameTimerRepository> { GameTimerRepositoryImpl(get(gameTimerStore)) }
 
     factory { ApplyDamageUseCase() }
     factory { ApplyLifeLossUseCase() }
@@ -84,6 +96,7 @@ val gameTrackerModule = module {
             repository = get(),
             gameHistory = get(),
             playerPrefs = get(),
+            gameTimer = get(),
             cardRepository = get(),
             applyDamage = get(),
             applyLifeLoss = get(),

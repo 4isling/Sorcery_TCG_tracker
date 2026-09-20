@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +24,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,6 +38,8 @@ import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameConfig
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerIdentity
+import com.hayse.sorcery.feature.game_tracker.domain.model.TimerConfig
+import com.hayse.sorcery.feature.game_tracker.domain.model.TimerExpiryAction
 import com.hayse.sorcery.feature.game_tracker.ui.screen.composable.AvatarPickerDialog
 import com.hayse.sorcery.feature.game_tracker.ui.viewmodel.GameTrackerViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -47,8 +55,8 @@ fun GameSetupScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     GameSetupContent(
         defaultOwnerPseudo = state.defaultOwnerPseudo,
-        onConfirm = { config ->
-            viewModel.newGame(config)
+        onConfirm = { config, timerConfig ->
+            viewModel.newGame(config, timerConfig)
             onStarted()
         },
         onCancel = onCancel,
@@ -59,7 +67,7 @@ fun GameSetupScreen(
 @Composable
 private fun GameSetupContent(
     defaultOwnerPseudo: String?,
-    onConfirm: (GameConfig) -> Unit,
+    onConfirm: (GameConfig, TimerConfig) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +78,15 @@ private fun GameSetupContent(
     var p1Pseudo by remember { mutableStateOf(defaultOwnerPseudo.orEmpty()) }
     var p2Pseudo by remember { mutableStateOf("") }
     var pickerFor by remember { mutableStateOf<PlayerId?>(null) }
+
+    val defaults = remember { TimerConfig() }
+    var timerEnabled by remember { mutableStateOf(false) }
+    var useGlobal by remember { mutableStateOf(defaults.useGlobal) }
+    var globalMinutes by remember { mutableIntStateOf(defaults.globalSeconds / 60) }
+    var usePerTurn by remember { mutableStateOf(defaults.usePerTurn) }
+    var perTurnMinutes by remember { mutableIntStateOf(defaults.perTurnSeconds / 60) }
+    var extraTurns by remember { mutableIntStateOf(defaults.extraTurns) }
+    var expiry by remember { mutableStateOf(defaults.expiry) }
 
     pickerFor?.let { player ->
         AvatarPickerDialog(
@@ -108,6 +125,25 @@ private fun GameSetupContent(
             onPickAvatar = { pickerFor = PlayerId.Two },
         )
 
+        HorizontalDivider()
+
+        TimerSetupSection(
+            enabled = timerEnabled,
+            onEnabledChange = { timerEnabled = it },
+            useGlobal = useGlobal,
+            onUseGlobalChange = { useGlobal = it },
+            globalMinutes = globalMinutes,
+            onGlobalMinutesChange = { globalMinutes = it },
+            usePerTurn = usePerTurn,
+            onUsePerTurnChange = { usePerTurn = it },
+            perTurnMinutes = perTurnMinutes,
+            onPerTurnMinutesChange = { perTurnMinutes = it },
+            extraTurns = extraTurns,
+            onExtraTurnsChange = { extraTurns = it },
+            expiry = expiry,
+            onExpiryChange = { expiry = it },
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm),
@@ -121,12 +157,155 @@ private fun GameSetupContent(
                             playerOne = identityOf(p1Avatar, p1Pseudo),
                             playerTwo = identityOf(p2Avatar, p2Pseudo),
                         ),
+                        TimerConfig(
+                            enabled = timerEnabled && (useGlobal || usePerTurn),
+                            useGlobal = useGlobal,
+                            globalSeconds = globalMinutes.coerceAtLeast(1) * 60,
+                            usePerTurn = usePerTurn,
+                            perTurnSeconds = perTurnMinutes.coerceAtLeast(1) * 60,
+                            extraTurns = extraTurns.coerceAtLeast(0),
+                            expiry = expiry,
+                        ),
                     )
                 },
                 modifier = Modifier.weight(1f),
             ) { Text(stringResource(R.string.game_start)) }
         }
     }
+}
+
+@Composable
+private fun TimerSetupSection(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    useGlobal: Boolean,
+    onUseGlobalChange: (Boolean) -> Unit,
+    globalMinutes: Int,
+    onGlobalMinutesChange: (Int) -> Unit,
+    usePerTurn: Boolean,
+    onUsePerTurnChange: (Boolean) -> Unit,
+    perTurnMinutes: Int,
+    onPerTurnMinutesChange: (Int) -> Unit,
+    extraTurns: Int,
+    onExtraTurnsChange: (Int) -> Unit,
+    expiry: TimerExpiryAction,
+    onExpiryChange: (TimerExpiryAction) -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.game_timer_title), style = MaterialTheme.typography.titleMedium)
+            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+        }
+
+        if (enabled) {
+            TimerToggleRow(
+                label = stringResource(R.string.game_timer_global),
+                checked = useGlobal,
+                onCheckedChange = onUseGlobalChange,
+            )
+            if (useGlobal) {
+                TimerMinutesRow(
+                    label = stringResource(R.string.game_timer_minutes),
+                    value = globalMinutes,
+                    onValueChange = onGlobalMinutesChange,
+                )
+
+                Text(
+                    text = stringResource(R.string.game_timer_expiry_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                TimerExpiryAction.entries.forEach { option ->
+                    ExpiryOptionRow(
+                        label = stringResource(expiryLabel(option)),
+                        selected = expiry == option,
+                        onSelect = { onExpiryChange(option) },
+                    )
+                }
+                if (expiry == TimerExpiryAction.SuddenDeath) {
+                    TimerMinutesRow(
+                        label = stringResource(R.string.game_timer_extra_turns),
+                        value = extraTurns,
+                        onValueChange = onExtraTurnsChange,
+                        min = 0,
+                    )
+                }
+            }
+
+            TimerToggleRow(
+                label = stringResource(R.string.game_timer_per_turn),
+                checked = usePerTurn,
+                onCheckedChange = onUsePerTurnChange,
+            )
+            if (usePerTurn) {
+                TimerMinutesRow(
+                    label = stringResource(R.string.game_timer_minutes),
+                    value = perTurnMinutes,
+                    onValueChange = onPerTurnMinutesChange,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimerToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun TimerMinutesRow(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    min: Int = 1,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        CounterStepper(
+            value = value,
+            onValueChange = onValueChange,
+            min = min,
+            buttonSize = 36.dp,
+            valueStyle = MaterialTheme.typography.titleMedium,
+        )
+    }
+}
+
+@Composable
+private fun ExpiryOptionRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onSelect),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.xs),
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@StringRes
+private fun expiryLabel(action: TimerExpiryAction): Int = when (action) {
+    TimerExpiryAction.SuddenDeath -> R.string.game_timer_expiry_sudden_death
+    TimerExpiryAction.Verdict -> R.string.game_timer_expiry_verdict
+    TimerExpiryAction.Draw -> R.string.game_timer_expiry_draw
+    TimerExpiryAction.None -> R.string.game_timer_expiry_none
 }
 
 private fun identityOf(avatar: PlayerIdentity?, pseudo: String): PlayerIdentity? {

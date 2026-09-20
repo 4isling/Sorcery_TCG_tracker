@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
+import com.hayse.sorcery.core.ui.ProvideTopBarActions
 import com.hayse.sorcery.core.ui.composable.LoadingState
 import com.hayse.sorcery.core.ui.isExpanded
 import com.hayse.sorcery.core.ui.composable.SorceryDialog
@@ -52,7 +56,10 @@ import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.core.ui.theme.skin.Skins
 import com.hayse.sorcery.core.ui.theme.skin.skinFor
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameTimerState
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
+import com.hayse.sorcery.feature.game_tracker.domain.model.TimerPhase
+import com.hayse.sorcery.feature.game_tracker.domain.model.TimerVerdict
 import com.hayse.sorcery.feature.game_tracker.ui.screen.composable.DiceRollerDialog
 import com.hayse.sorcery.feature.game_tracker.ui.screen.composable.GameLogSheet
 import com.hayse.sorcery.feature.game_tracker.ui.screen.composable.PlayerPanel
@@ -102,6 +109,8 @@ fun GameTrackerScreen(
                 viewModel = viewModel,
                 playerOneSet = state.playerOneAvatarSet,
                 playerTwoSet = state.playerTwoAvatarSet,
+                timer = state.timer,
+                verdict = state.verdict,
                 onNewGame = onNewGame,
                 modifier = modifier,
             )
@@ -128,18 +137,60 @@ private fun GameContent(
     viewModel: GameTrackerViewModel,
     playerOneSet: String?,
     playerTwoSet: String?,
+    timer: GameTimerState?,
+    verdict: TimerVerdict?,
     onNewGame: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (verdict != null) {
+        VerdictDialog(
+            verdict = verdict,
+            playerOnePseudo = game.player(PlayerId.One).pseudo,
+            playerTwoPseudo = game.player(PlayerId.Two).pseudo,
+            onDismiss = viewModel::dismissVerdict,
+        )
+    }
+
+    var showEndConfirm by remember { mutableStateOf(false) }
+
+    // Actions de partie déportées dans la barre supérieure pour alléger la barre de contrôle.
+    ProvideTopBarActions {
+        IconButton(onClick = { viewModel.showDice(true) }) {
+            Icon(Icons.Filled.Casino, contentDescription = stringResource(R.string.game_dice))
+        }
+        IconButton(onClick = { viewModel.showLog(true) }) {
+            Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.game_log))
+        }
+        IconButton(onClick = onNewGame) {
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.game_new_game))
+        }
+        IconButton(onClick = { showEndConfirm = true }) {
+            Icon(Icons.Filled.Flag, contentDescription = stringResource(R.string.game_finish))
+        }
+    }
+
+    if (showEndConfirm) {
+        SorceryDialog(
+            title = stringResource(R.string.game_end_confirm_title),
+            confirmText = stringResource(R.string.game_finish),
+            onConfirm = {
+                showEndConfirm = false
+                viewModel.endGame()
+            },
+            dismissText = stringResource(R.string.game_cancel),
+            onDismiss = { showEndConfirm = false },
+        ) {
+            Text(stringResource(R.string.game_end_confirm_message))
+        }
+    }
+
     val controlBar: @Composable () -> Unit = {
         ControlBar(
             turn = game.turn,
+            timer = timer,
+            onToggleTimer = viewModel::toggleTimer,
             onNewTurn = viewModel::newTurn,
             onUndo = viewModel::undo,
-            onNewGame = onNewGame,
-            onEndGame = viewModel::endGame,
-            onDice = { viewModel.showDice(true) },
-            onLog = { viewModel.showLog(true) },
         )
     }
 
@@ -248,15 +299,12 @@ private fun SelfPanel(
 @Composable
 private fun ControlBar(
     turn: Int,
+    timer: GameTimerState?,
+    onToggleTimer: () -> Unit,
     onNewTurn: () -> Unit,
     onUndo: () -> Unit,
-    onNewGame: () -> Unit,
-    onEndGame: () -> Unit,
-    onDice: () -> Unit,
-    onLog: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
-    var showEndConfirm by remember { mutableStateOf(false) }
 
     Surface(tonalElevation = 3.dp, shadowElevation = 2.dp) {
         Row(
@@ -264,44 +312,112 @@ private fun ControlBar(
                 .fillMaxWidth()
                 .padding(horizontal = spacing.md, vertical = spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             Text(stringResource(R.string.game_turn_n, turn), style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing.xs)) {
-                FilledTonalIconButton(onClick = onNewTurn) {
-                    Icon(Icons.Filled.NavigateNext, contentDescription = stringResource(R.string.game_next_turn))
-                }
-                IconButton(onClick = onUndo) {
-                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.game_undo))
-                }
-                IconButton(onClick = onDice) {
-                    Icon(Icons.Filled.Casino, contentDescription = stringResource(R.string.game_dice))
-                }
-                IconButton(onClick = onLog) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.game_log))
-                }
-                IconButton(onClick = onNewGame) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.game_new_game))
-                }
-                IconButton(onClick = { showEndConfirm = true }) {
-                    Icon(Icons.Filled.Flag, contentDescription = stringResource(R.string.game_finish))
+            if (timer != null) {
+                TimerInline(timer = timer, onToggle = onToggleTimer, modifier = Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            IconButton(onClick = onUndo) {
+                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.game_undo))
+            }
+            FilledTonalIconButton(onClick = onNewTurn) {
+                Icon(Icons.Filled.NavigateNext, contentDescription = stringResource(R.string.game_next_turn))
+            }
+        }
+    }
+}
+
+/** Chrono en ligne : temps restant (global / par tour), état de mort subite, et pause/reprise. */
+@Composable
+private fun TimerInline(timer: GameTimerState, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val spacing = LocalSpacing.current
+    val suddenDeath = timer.phase == TimerPhase.SuddenDeath
+    val finished = timer.phase == TimerPhase.Finished
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm, Alignment.CenterHorizontally),
+    ) {
+        val accent = when {
+            finished -> MaterialTheme.colorScheme.error
+            suddenDeath -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.primary
+        }
+        when {
+            finished -> Text(
+                stringResource(R.string.game_timer_finished),
+                style = MaterialTheme.typography.labelLarge,
+                color = accent,
+            )
+            suddenDeath -> Text(
+                stringResource(R.string.game_timer_sudden_death, timer.extraTurnsLeft),
+                style = MaterialTheme.typography.labelLarge,
+                color = accent,
+            )
+            timer.config.useGlobal -> TimerChip(
+                label = stringResource(R.string.game_timer_global_short),
+                seconds = timer.globalRemaining,
+                color = accent,
+            )
+        }
+        if (timer.config.usePerTurn && !finished) {
+            TimerChip(
+                label = stringResource(R.string.game_timer_turn_short),
+                seconds = timer.turnRemaining,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+        if (!finished) {
+            IconButton(onClick = onToggle) {
+                if (timer.running) {
+                    Icon(Icons.Filled.Pause, contentDescription = stringResource(R.string.game_timer_pause))
+                } else {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.game_timer_resume))
                 }
             }
         }
     }
+}
 
-    if (showEndConfirm) {
-        SorceryDialog(
-            title = stringResource(R.string.game_end_confirm_title),
-            confirmText = stringResource(R.string.game_finish),
-            onConfirm = {
-                showEndConfirm = false
-                onEndGame()
-            },
-            dismissText = stringResource(R.string.game_cancel),
-            onDismiss = { showEndConfirm = false },
-        ) {
-            Text(stringResource(R.string.game_end_confirm_message))
-        }
+@Composable
+private fun TimerChip(label: String, seconds: Int, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.xs),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(formatClock(seconds), style = MaterialTheme.typography.titleMedium, color = color)
     }
+}
+
+@Composable
+private fun VerdictDialog(
+    verdict: TimerVerdict,
+    playerOnePseudo: String?,
+    playerTwoPseudo: String?,
+    onDismiss: () -> Unit,
+) {
+    val p1 = playerOnePseudo ?: stringResource(R.string.game_player_one)
+    val p2 = playerTwoPseudo ?: stringResource(R.string.game_player_two)
+    val message = when (verdict) {
+        TimerVerdict.PlayerOneWins -> stringResource(R.string.game_timer_verdict_winner, p1)
+        TimerVerdict.PlayerTwoWins -> stringResource(R.string.game_timer_verdict_winner, p2)
+        TimerVerdict.Draw -> stringResource(R.string.game_timer_verdict_draw)
+    }
+    SorceryDialog(
+        title = stringResource(R.string.game_timer_verdict_title),
+        confirmText = stringResource(R.string.game_timer_verdict_ok),
+        onConfirm = onDismiss,
+        onDismiss = onDismiss,
+    ) {
+        Text(message)
+    }
+}
+
+private fun formatClock(totalSeconds: Int): String {
+    val s = totalSeconds.coerceAtLeast(0)
+    return "%d:%02d".format(s / 60, s % 60)
 }

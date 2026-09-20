@@ -61,8 +61,11 @@ import androidx.navigation.compose.rememberNavController
 import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.CardListContext
 import com.hayse.sorcery.core.ui.LocalCardListContext
+import com.hayse.sorcery.core.ui.LocalTopBarActions
 import com.hayse.sorcery.core.ui.LocalTopBarSearch
 import com.hayse.sorcery.core.ui.LocalWindowWidthSizeClass
+import com.hayse.sorcery.core.ui.TopBarActionsSlot
+import com.hayse.sorcery.core.ui.TopBarActionsState
 import com.hayse.sorcery.core.ui.TopBarSearchState
 import com.hayse.sorcery.core.ui.isAtLeastMedium
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedBackground
@@ -82,6 +85,7 @@ fun AppScaffold(widthSizeClass: WindowWidthSizeClass, socialEnabled: Boolean = t
     val title = stringResource(Destination.labelForRoute(currentRoute))
 
     val topBarSearch = remember { TopBarSearchState() }
+    val topBarActions = remember { TopBarActionsState() }
     val cardListContext = remember { CardListContext() }
 
     val destinations = Destination.drawerDestinations
@@ -90,6 +94,7 @@ fun AppScaffold(widthSizeClass: WindowWidthSizeClass, socialEnabled: Boolean = t
     CompositionLocalProvider(
         LocalWindowWidthSizeClass provides widthSizeClass,
         LocalTopBarSearch provides topBarSearch,
+        LocalTopBarActions provides topBarActions,
         LocalCardListContext provides cardListContext,
     ) {
         if (widthSizeClass.isAtLeastMedium) {
@@ -224,7 +229,10 @@ private fun DrawerScaffold(
                             Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.nav_menu))
                         }
                     },
-                    actions = { TopBarSearchAction() },
+                    actions = {
+                        TopBarActionsSlot()
+                        TopBarSearchAction()
+                    },
                 )
             },
         ) { innerPadding ->
@@ -262,7 +270,10 @@ private fun RailScaffold(
             topBar = {
                 SkinnedTopBar(
                     title = { TopBarContent(title) },
-                    actions = { TopBarSearchAction() },
+                    actions = {
+                        TopBarActionsSlot()
+                        TopBarSearchAction()
+                    },
                 )
             },
         ) { innerPadding ->

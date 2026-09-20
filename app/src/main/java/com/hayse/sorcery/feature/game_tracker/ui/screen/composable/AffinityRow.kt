@@ -3,6 +3,7 @@ package com.hayse.sorcery.feature.game_tracker.ui.screen.composable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,8 +29,8 @@ fun AffinityRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Element.entries.forEach { element ->
@@ -40,27 +41,29 @@ fun AffinityRow(
                 ElementIcon(element = element)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     AdjustButton(
                         symbol = "−",
                         contentDescription = stringResource(R.string.game_affinity_decrease, element.name),
                         onClick = { onDelta(element, -1) },
                         onLongClick = { onDelta(element, -5) },
-                        size = 32.dp,
+                        size = 24.dp,
+                        symbolStyle = MaterialTheme.typography.titleMedium,
                     )
                     Text(
                         text = (affinity[element] ?: 0).toString(),
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(min = 16.dp),
+                        modifier = Modifier.widthIn(min = 12.dp),
                     )
                     AdjustButton(
                         symbol = "+",
                         contentDescription = stringResource(R.string.game_affinity_increase, element.name),
                         onClick = { onDelta(element, 1) },
                         onLongClick = { onDelta(element, 5) },
-                        size = 32.dp,
+                        size = 24.dp,
+                        symbolStyle = MaterialTheme.typography.titleMedium,
                     )
                 }
             }
