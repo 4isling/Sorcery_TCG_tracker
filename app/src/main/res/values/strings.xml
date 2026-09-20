@@ -311,6 +311,16 @@
     <string name="room_send">Envoyer</string>
     <string name="room_share_collection">Partager ma collection</string>
     <string name="room_share_lists">Partager mes listes</string>
+    <string name="room_tab_decks">Decks</string>
+    <string name="room_decks_mine">Partager un deck</string>
+    <string name="room_decks_received">Decks reçus</string>
+    <string name="room_decks_mine_empty">Tu n\'as pas encore de deck à partager.</string>
+    <string name="room_decks_received_empty">Le pair n\'a pas encore partagé de deck.</string>
+    <string name="room_deck_share">Partager</string>
+    <string name="room_deck_save">Enregistrer</string>
+    <string name="room_deck_saved">Deck enregistré</string>
+    <string name="room_deck_cards">%1$d cartes</string>
+    <string name="room_deck_counts">%1$d sorts · %2$d sites</string>
     <string name="room_peer_collection_empty">Le pair n\'a pas encore partagé sa collection.</string>
     <string name="room_i_give">Je donne</string>
     <string name="room_i_receive">Je reçois</string>

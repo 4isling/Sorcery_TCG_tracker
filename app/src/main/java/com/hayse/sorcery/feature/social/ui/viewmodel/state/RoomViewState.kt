@@ -1,5 +1,7 @@
 package com.hayse.sorcery.feature.social.ui.viewmodel.state
 
+import com.hayse.sorcery.feature.deck.domain.model.DeckFormat
+import com.hayse.sorcery.feature.deck.domain.model.DeckSummary
 import com.hayse.sorcery.feature.social.domain.model.SuggestionReason
 import com.hayse.sorcery.feature.social.domain.model.TradeCardLine
 import com.hayse.sorcery.feature.social.domain.p2p.PairingRole
@@ -8,7 +10,16 @@ import com.hayse.sorcery.feature.social.domain.p2p.PairingRole
 enum class RoomPhase { Pairing, Connecting, InRoom, Failed }
 
 /** Onglets internes affichés une fois la room ouverte. */
-enum class RoomTab { Chat, PeerCollection, Trade, Suggestions }
+enum class RoomTab { Chat, PeerCollection, Trade, Suggestions, Decks }
+
+/** Un deck reçu du pair, résolu en cartes affichables et prêt à être enregistré localement. */
+data class ReceivedDeck(
+    val name: String,
+    val format: DeckFormat,
+    val cards: List<TradeCardLine>,
+) {
+    val cardCount: Int get() = cards.sumOf { it.quantity }
+}
 
 /** Une carte suggérée à l'échange, résolue pour l'affichage. */
 data class SuggestionCardLine(
@@ -60,6 +71,8 @@ data class OfferView(
  * @param peerCollection collection du pair résolue (pour l'afficher / composer).
  * @param suggestions échanges suggérés calculés depuis les collections complètes (aide optionnelle).
  * @param incomingOffer offre reçue en attente de réponse (`null` = aucune).
+ * @param myDecks mes decks locaux (pour en partager un au pair).
+ * @param peerDecks decks reçus du pair, résolus et enregistrables localement.
  * @param failure cause d'échec quand [phase] vaut [RoomPhase.Failed].
  */
 data class RoomViewState(
@@ -78,6 +91,8 @@ data class RoomViewState(
     val peerCollection: List<TradeCardLine> = emptyList(),
     val suggestions: SuggestionResultUi? = null,
     val incomingOffer: OfferView? = null,
+    val myDecks: List<DeckSummary> = emptyList(),
+    val peerDecks: List<ReceivedDeck> = emptyList(),
     val failure: RoomFailure? = null,
 ) {
     val canStart: Boolean

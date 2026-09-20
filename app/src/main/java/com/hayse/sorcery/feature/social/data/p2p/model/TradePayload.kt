@@ -5,7 +5,7 @@ import com.hayse.sorcery.feature.social.domain.model.WantedCopy
 import kotlinx.serialization.Serializable
 
 /** Version du schéma des payloads P2P. À incrémenter à tout changement incompatible. */
-const val SCHEMA_VERSION: Int = 3
+const val SCHEMA_VERSION: Int = 4
 
 /** Une ligne de payload : impression (`slug` + `finish`) et quantité concernée. */
 @Serializable

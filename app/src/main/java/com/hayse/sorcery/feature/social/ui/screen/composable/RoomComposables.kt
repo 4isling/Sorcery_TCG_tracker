@@ -49,10 +49,12 @@ import com.hayse.sorcery.core.ui.composable.CardGridItem
 import com.hayse.sorcery.core.ui.composable.CountBadge
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.feature.deck.domain.model.DeckSummary
 import com.hayse.sorcery.feature.social.domain.model.MatchLine
 import com.hayse.sorcery.feature.social.domain.model.SuggestionReason
 import com.hayse.sorcery.feature.social.domain.model.TradeCardLine
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.OfferView
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.ReceivedDeck
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomViewState
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.SuggestionCardLine
@@ -68,6 +70,8 @@ fun RoomInterior(
     onSendChat: (String) -> Unit,
     onShareCollection: () -> Unit,
     onShareLists: () -> Unit,
+    onShareDeck: (Long) -> Unit,
+    onSavePeerDeck: (ReceivedDeck) -> Unit,
     onPropose: (List<MatchLine>, List<MatchLine>) -> Unit,
     onSaveComposed: (List<MatchLine>, List<MatchLine>) -> Unit,
     onRespondOffer: (Boolean) -> Unit,
@@ -106,6 +110,7 @@ fun RoomInterior(
                 RoomTab.PeerCollection -> PeerCollectionTab(state, onCardClick, onShareCollection, onShareLists)
                 RoomTab.Trade -> TradeTab(state, onPropose, onSaveComposed)
                 RoomTab.Suggestions -> SuggestionsTab(state, onPropose)
+                RoomTab.Decks -> DecksTab(state, onShareDeck, onSavePeerDeck)
             }
         }
     }
@@ -222,6 +227,114 @@ private fun PeerCollectionTab(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Onglet Decks : partager un de mes decks au pair (section haute) et enregistrer localement les decks
+ * qu'il m'envoie (section basse), nommés d'après lui pour les retrouver.
+ */
+@Composable
+private fun DecksTab(
+    state: RoomViewState,
+    onShareDeck: (Long) -> Unit,
+    onSavePeerDeck: (ReceivedDeck) -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    val saved = remember { mutableStateMapOf<String, Boolean>() }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.room_decks_mine),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        if (state.myDecks.isEmpty()) {
+            item { SectionHint(stringResource(R.string.room_decks_mine_empty)) }
+        } else {
+            items(state.myDecks, key = { "mine-${it.id}" }) { deck ->
+                MyDeckRow(deck, onShare = { onShareDeck(deck.id) })
+            }
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.room_decks_received),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = spacing.sm),
+            )
+        }
+        if (state.peerDecks.isEmpty()) {
+            item { SectionHint(stringResource(R.string.room_decks_received_empty)) }
+        } else {
+            items(state.peerDecks, key = { "peer-${it.name}" }) { deck ->
+                PeerDeckRow(
+                    deck = deck,
+                    isSaved = saved[deck.name] == true,
+                    onSave = {
+                        onSavePeerDeck(deck)
+                        saved[deck.name] = true
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHint(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun MyDeckRow(deck: DeckSummary, onShare: () -> Unit) {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(deck.name, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(R.string.room_deck_counts, deck.spellbookCount, deck.atlasCount),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        OutlinedButton(onClick = onShare) { Text(stringResource(R.string.room_deck_share)) }
+    }
+}
+
+@Composable
+private fun PeerDeckRow(deck: ReceivedDeck, isSaved: Boolean, onSave: () -> Unit) {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(deck.name, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = "${deck.format.label} · ${stringResource(R.string.room_deck_cards, deck.cardCount)}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        androidx.compose.material3.Button(onClick = onSave, enabled = !isSaved) {
+            Text(stringResource(if (isSaved) R.string.room_deck_saved else R.string.room_deck_save))
         }
     }
 }
@@ -536,4 +649,5 @@ private fun roomTabLabel(tab: RoomTab): String = when (tab) {
     RoomTab.PeerCollection -> stringResource(R.string.room_tab_peer_collection)
     RoomTab.Trade -> stringResource(R.string.room_tab_trade)
     RoomTab.Suggestions -> stringResource(R.string.room_suggestions)
+    RoomTab.Decks -> stringResource(R.string.room_tab_decks)
 }

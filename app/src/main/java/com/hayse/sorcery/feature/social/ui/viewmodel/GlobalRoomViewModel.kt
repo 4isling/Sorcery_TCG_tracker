@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
+import com.hayse.sorcery.feature.deck.domain.repository.DeckRepository
 import com.hayse.sorcery.feature.settings.domain.repository.SettingsRepository
 import com.hayse.sorcery.feature.social.data.p2p.NearbyMeshSession
 import com.hayse.sorcery.feature.social.data.p2p.model.MeshEnvelope
@@ -17,6 +18,7 @@ import com.hayse.sorcery.feature.social.domain.repository.SavedTradeRepository
 import com.hayse.sorcery.feature.social.domain.repository.TradeListRepository
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.GlobalChatLine
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.GlobalRoomViewState
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.ReceivedDeck
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomPhase
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomViewState
@@ -49,6 +51,7 @@ class GlobalRoomViewModel(
     private val tradeLists: TradeListRepository,
     private val savedTrades: SavedTradeRepository,
     private val collection: CollectionRepository,
+    private val decks: DeckRepository,
     private val catalog: CardCatalog,
 ) : ViewModel() {
 
@@ -163,6 +166,7 @@ class GlobalRoomViewModel(
             tradeLists = tradeLists,
             savedTrades = savedTrades,
             collection = collection,
+            decks = decks,
             catalog = catalog,
             send = { session?.sendTo(peerId, it) ?: Unit },
         )
@@ -193,6 +197,8 @@ class GlobalRoomViewModel(
     fun privSendChat(text: String) = openEngine()?.sendChat(text) ?: Unit
     fun privShareCollection() = openEngine()?.shareCollection() ?: Unit
     fun privShareLists() = openEngine()?.shareLists() ?: Unit
+    fun privShareDeck(deckId: Long) = openEngine()?.shareDeck(deckId) ?: Unit
+    fun privSavePeerDeck(deck: ReceivedDeck) = openEngine()?.savePeerDeck(deck) ?: Unit
 
     fun privPropose(iGive: List<MatchLine>, iReceive: List<MatchLine>) =
         openEngine()?.proposeTrade(iGive, iReceive) ?: Unit

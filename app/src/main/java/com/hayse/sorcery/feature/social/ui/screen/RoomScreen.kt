@@ -71,6 +71,8 @@ fun RoomScreen(
             onSendChat = viewModel::sendChat,
             onShareCollection = viewModel::shareCollection,
             onShareLists = viewModel::shareLists,
+            onShareDeck = viewModel::shareDeck,
+            onSavePeerDeck = viewModel::savePeerDeck,
             onPropose = viewModel::proposeTrade,
             onSaveComposed = viewModel::saveComposedForLater,
             onRespondOffer = viewModel::respondOffer,

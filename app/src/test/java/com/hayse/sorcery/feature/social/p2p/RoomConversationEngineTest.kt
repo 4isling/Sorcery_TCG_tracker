@@ -10,6 +10,12 @@ import com.hayse.sorcery.feature.collection.domain.model.OwnedCopy
 import com.hayse.sorcery.feature.collection.domain.model.SetCompletion
 import com.hayse.sorcery.feature.collection.domain.model.SurplusCard
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
+import com.hayse.sorcery.feature.deck.domain.model.DeckCatalogFilter
+import com.hayse.sorcery.feature.deck.domain.model.DeckDetail
+import com.hayse.sorcery.feature.deck.domain.model.DeckEntry
+import com.hayse.sorcery.feature.deck.domain.model.DeckFormat
+import com.hayse.sorcery.feature.deck.domain.model.DeckSummary
+import com.hayse.sorcery.feature.deck.domain.repository.DeckRepository
 import com.hayse.sorcery.feature.social.data.p2p.model.PayloadEntry
 import com.hayse.sorcery.feature.social.data.p2p.model.RoomMessage
 import com.hayse.sorcery.feature.social.domain.model.MatchLine
@@ -53,6 +59,7 @@ class RoomConversationEngineTest {
         tradeLists = EmptyTradeListRepository,
         savedTrades = NoopSavedTradeRepository,
         collection = collection,
+        decks = NoopDeckRepository,
         catalog = IdentityCatalog,
         send = { sent += it },
     )
@@ -231,4 +238,17 @@ private object NoopSavedTradeRepository : SavedTradeRepository {
     override suspend fun saveTrade(peerPseudo: String, iGive: List<MatchLine>, iReceive: List<MatchLine>) = Unit
     override suspend fun deleteTrade(id: Long) = Unit
     override suspend fun applyTrade(id: Long) = Unit
+}
+
+private object NoopDeckRepository : DeckRepository {
+    override fun observeDecks(): Flow<List<DeckSummary>> = MutableStateFlow(emptyList())
+    override fun observeDeck(deckId: Long): Flow<DeckDetail?> = MutableStateFlow(null)
+    override fun observeCatalog(deckId: Long, filter: DeckCatalogFilter): Flow<List<DeckEntry>> = emptyFlow()
+    override suspend fun availableTypes(): List<String> = emptyList()
+    override suspend fun availableSets(): List<String> = emptyList()
+    override suspend fun createDeck(name: String, format: DeckFormat): Long = 0L
+    override suspend fun renameDeck(deckId: Long, name: String) = Unit
+    override suspend fun deleteDeck(deckId: Long) = Unit
+    override suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int) = Unit
+    override suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int) = Unit
 }

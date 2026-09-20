@@ -75,6 +75,7 @@ val socialModule = module {
             tradeLists = get(),
             savedTrades = get(),
             collection = get(),
+            decks = get(),
             catalog = get(),
             settings = get(),
         )
@@ -87,6 +88,7 @@ val socialModule = module {
             tradeLists = get(),
             savedTrades = get(),
             collection = get(),
+            decks = get(),
             catalog = get(),
         )
     }

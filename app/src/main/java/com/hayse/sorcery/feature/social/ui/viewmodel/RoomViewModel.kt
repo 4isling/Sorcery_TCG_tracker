@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
+import com.hayse.sorcery.feature.deck.domain.repository.DeckRepository
 import com.hayse.sorcery.feature.settings.domain.repository.SettingsRepository
 import com.hayse.sorcery.feature.social.data.p2p.model.RoomMessage
 import com.hayse.sorcery.feature.social.data.p2p.model.SCHEMA_VERSION
@@ -16,6 +17,7 @@ import com.hayse.sorcery.feature.social.domain.p2p.SessionToken
 import com.hayse.sorcery.feature.social.domain.repository.CardCatalog
 import com.hayse.sorcery.feature.social.domain.repository.SavedTradeRepository
 import com.hayse.sorcery.feature.social.domain.repository.TradeListRepository
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.ReceivedDeck
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomFailure
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomPhase
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
@@ -39,6 +41,7 @@ class RoomViewModel(
     private val tradeLists: TradeListRepository,
     private val savedTrades: SavedTradeRepository,
     private val collection: CollectionRepository,
+    private val decks: DeckRepository,
     private val catalog: CardCatalog,
     private val settings: SettingsRepository,
 ) : ViewModel() {
@@ -126,6 +129,7 @@ class RoomViewModel(
                 tradeLists = tradeLists,
                 savedTrades = savedTrades,
                 collection = collection,
+                decks = decks,
                 catalog = catalog,
                 send = { opened.send(it) },
             )
@@ -170,6 +174,10 @@ class RoomViewModel(
     fun shareCollection() = engine?.shareCollection() ?: Unit
 
     fun shareLists() = engine?.shareLists() ?: Unit
+
+    fun shareDeck(deckId: Long) = engine?.shareDeck(deckId) ?: Unit
+
+    fun savePeerDeck(deck: ReceivedDeck) = engine?.savePeerDeck(deck) ?: Unit
 
     fun proposeTrade(iGive: List<MatchLine>, iReceive: List<MatchLine>) =
         engine?.proposeTrade(iGive, iReceive) ?: Unit

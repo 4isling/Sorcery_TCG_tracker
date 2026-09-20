@@ -2,6 +2,8 @@ package com.hayse.sorcery.feature.social.ui.viewmodel
 
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
+import com.hayse.sorcery.feature.deck.domain.model.DeckFormat
+import com.hayse.sorcery.feature.deck.domain.repository.DeckRepository
 import com.hayse.sorcery.feature.social.data.p2p.TradeSuggestionComputations
 import com.hayse.sorcery.feature.social.data.p2p.model.PayloadEntry
 import com.hayse.sorcery.feature.social.data.p2p.model.RoomMessage
@@ -14,6 +16,7 @@ import com.hayse.sorcery.feature.social.domain.repository.SavedTradeRepository
 import com.hayse.sorcery.feature.social.domain.repository.TradeListRepository
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.ChatLine
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.OfferView
+import com.hayse.sorcery.feature.social.ui.viewmodel.state.ReceivedDeck
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomTab
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.RoomViewState
 import com.hayse.sorcery.feature.social.ui.viewmodel.state.SuggestionCardLine
@@ -42,6 +45,7 @@ class RoomConversationEngine(
     private val tradeLists: TradeListRepository,
     private val savedTrades: SavedTradeRepository,
     private val collection: CollectionRepository,
+    private val decks: DeckRepository,
     private val catalog: CardCatalog,
     private val send: suspend (RoomMessage) -> Unit,
 ) {
@@ -75,7 +79,17 @@ class RoomConversationEngine(
         val resolved = catalog.resolve(entries.toMatchLines())
         state.update { it.copy(myCollection = resolved) }
         recomputeSuggestions()
+        observeMyDecks()
         return InitialPayload(entries, tradeable, wanted)
+    }
+
+    /** Suit mes decks locaux pour les proposer au partage (durée de vie du moteur). */
+    private fun observeMyDecks() {
+        scope.launch {
+            decks.observeDecks().collect { summaries ->
+                state.update { it.copy(myDecks = summaries) }
+            }
+        }
     }
 
     /** Traite un message reçu (hors `Hello`, géré par l'appelant). */
@@ -97,6 +111,14 @@ class RoomConversationEngine(
                 peerTradeable = message.tradeable
                 peerWanted = message.wanted
                 recomputeSuggestions()
+            }
+
+            is RoomMessage.DeckSnapshot -> {
+                val cards = catalog.resolve(message.entries.toMatchLines())
+                val deck = ReceivedDeck(message.name, DeckFormat.fromId(message.formatId), cards)
+                state.update { st ->
+                    st.copy(peerDecks = st.peerDecks.filterNot { it.name == deck.name } + deck)
+                }
             }
 
             is RoomMessage.TradeOffer -> {
@@ -146,6 +168,31 @@ class RoomConversationEngine(
             myPayload = myPayload.copy(tradeable = tradeable, wanted = wanted)
             send(RoomMessage.TradeLists(tradeable, wanted))
             recomputeSuggestions()
+        }
+    }
+
+    /** Envoie un de mes decks au pair : chaque carte via une impression représentative résolue localement. */
+    fun shareDeck(deckId: Long) {
+        scope.launch {
+            val detail = decks.observeDeck(deckId).first() ?: return@launch
+            val printingsByCard = catalog.suggestionCatalog().printingsByCard
+            val entries = detail.entries.mapNotNull { entry ->
+                val slug = printingsByCard[entry.card.name]?.firstOrNull() ?: return@mapNotNull null
+                PayloadEntry(slug, "", entry.quantity)
+            }
+            send(RoomMessage.DeckSnapshot(detail.name, detail.format.id, entries))
+        }
+    }
+
+    /** Enregistre un deck reçu comme deck local, suffixé du pseudo du pair pour le retrouver. */
+    fun savePeerDeck(deck: ReceivedDeck) {
+        scope.launch {
+            val peer = state.value.peerPseudo?.takeIf { it.isNotBlank() }
+            val name = if (peer != null) "${deck.name} ($peer)" else deck.name
+            val deckId = decks.createDeck(name, deck.format)
+            deck.cards
+                .groupBy { it.card.name }
+                .forEach { (cardName, lines) -> decks.setCardQuantity(deckId, cardName, lines.sumOf { it.quantity }) }
         }
     }
 

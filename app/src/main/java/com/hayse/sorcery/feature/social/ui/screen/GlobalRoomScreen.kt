@@ -86,6 +86,8 @@ fun GlobalRoomScreen(
             onSendChat = viewModel::privSendChat,
             onShareCollection = viewModel::privShareCollection,
             onShareLists = viewModel::privShareLists,
+            onShareDeck = viewModel::privShareDeck,
+            onSavePeerDeck = viewModel::privSavePeerDeck,
             onPropose = viewModel::privPropose,
             onSaveComposed = viewModel::privSaveComposed,
             onRespondOffer = viewModel::privRespondOffer,
