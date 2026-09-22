@@ -44,6 +44,7 @@ import com.hayse.sorcery.feature.settings.ui.screen.SettingsScreen
 import com.hayse.sorcery.feature.social.ui.screen.GlobalRoomScreen
 import com.hayse.sorcery.feature.social.ui.screen.RoomScreen
 import com.hayse.sorcery.feature.social.ui.screen.SocialHubScreen
+import com.hayse.sorcery.feature.statistics.ui.screen.StatisticsScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -131,6 +132,9 @@ fun AppNavHost(
             CollectionScreen(
                 onCardClick = { name -> navController.navigate(Destination.CardDetail.routeFor(name)) },
             )
+        }
+        composable(Destination.Statistics.route) {
+            StatisticsScreen()
         }
         composable(Destination.DeckBuilder.route) {
             DeckListScreen(

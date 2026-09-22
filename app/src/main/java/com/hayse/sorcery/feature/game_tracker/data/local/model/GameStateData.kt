@@ -20,6 +20,7 @@ data class GameStateData(
     val turn: Int,
     val activePlayerIndex: Int,
     val history: List<GameEventData> = emptyList(),
+    val startedAt: Long = 0L,
 )
 
 @Serializable
@@ -40,6 +41,7 @@ fun GameState.toData(): GameStateData = GameStateData(
     turn = turn,
     activePlayerIndex = if (activePlayer == PlayerId.One) 0 else 1,
     history = history.map { it.toData() },
+    startedAt = startedAt,
 )
 
 fun GameStateData.toDomain(): GameState {
@@ -57,6 +59,7 @@ fun GameStateData.toDomain(): GameState {
         turn = turn,
         activePlayer = if (activePlayerIndex == 0) PlayerId.One else PlayerId.Two,
         history = history.map { it.toDomain() },
+        startedAt = startedAt,
     )
 }
 

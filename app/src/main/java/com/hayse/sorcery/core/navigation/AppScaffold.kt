@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CollectionsBookmark
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
@@ -312,6 +313,7 @@ private fun drawerIcon(destination: Destination): ImageVector = when (destinatio
     Destination.Home -> Icons.Filled.Home
     Destination.CardBrowser -> Icons.Filled.Style
     Destination.Collection -> Icons.Filled.CollectionsBookmark
+    Destination.Statistics -> Icons.Filled.BarChart
     Destination.GameMenu -> Icons.Filled.SportsEsports
     Destination.DeckBuilder -> Icons.Filled.Dashboard
     Destination.Social -> Icons.Filled.SwapHoriz

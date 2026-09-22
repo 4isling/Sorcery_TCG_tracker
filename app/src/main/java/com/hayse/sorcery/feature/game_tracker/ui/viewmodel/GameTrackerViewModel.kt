@@ -124,7 +124,7 @@ class GameTrackerViewModel(
             viewModelScope.launch { playerPrefs.setOwnerPseudo(pseudo) }
             _state.value = _state.value.copy(defaultOwnerPseudo = pseudo)
         }
-        commit(resetGame(config))
+        commit(resetGame(config).copy(startedAt = System.currentTimeMillis()))
         refreshAvatarSets()
 
         val timer = if (timerConfig.enabled) GameTimer.start(timerConfig) else null
@@ -141,14 +141,17 @@ class GameTrackerViewModel(
             val outcome = game.outcome()
             val one = game.player(PlayerId.One)
             val two = game.player(PlayerId.Two)
+            val now = System.currentTimeMillis()
+            val duration = if (game.startedAt > 0L) ((now - game.startedAt) / 1000).toInt() else null
             val record = GameRecord(
-                playedAt = System.currentTimeMillis(),
+                playedAt = now,
                 playerOnePseudo = one.pseudo,
                 playerOneAvatar = one.avatarName,
                 playerTwoPseudo = two.pseudo,
                 playerTwoAvatar = two.avatarName,
                 winner = outcome.winner,
                 turns = outcome.turns,
+                durationSeconds = duration,
             )
             viewModelScope.launch { gameHistory.add(record) }
         }

@@ -51,7 +51,7 @@ class UndoLastEventUseCase {
         val remaining = state.history.dropLast(1)
         val base = GameState.initial(state.config)
         val replayed = remaining.fold(base) { acc, event -> GameReducer.apply(acc, event) }
-        return replayed.copy(history = remaining)
+        return replayed.copy(history = remaining, startedAt = state.startedAt)
     }
 }
 

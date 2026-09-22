@@ -6,6 +6,8 @@ data class GameState(
     val turn: Int,
     val activePlayer: PlayerId,
     val history: List<GameEvent>,
+    /** Horodatage (epoch ms) du début de partie ; 0 si inconnu (parties antérieures au suivi). */
+    val startedAt: Long = 0L,
 ) {
     fun player(id: PlayerId): PlayerState = players.getValue(id)
 

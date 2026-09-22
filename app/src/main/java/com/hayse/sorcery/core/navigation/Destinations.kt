@@ -11,6 +11,7 @@ sealed class Destination(val route: String, @StringRes val labelRes: Int) {
     data object GameHistory : Destination("game_history", R.string.nav_game_history)
     data object CardBrowser : Destination("card_browser", R.string.nav_cards)
     data object Collection : Destination("collection", R.string.nav_collection)
+    data object Statistics : Destination("statistics", R.string.nav_statistics)
     data object DeckBuilder : Destination("deck_builder", R.string.nav_decks)
     data object Social : Destination("social", R.string.nav_social)
     data object Settings : Destination("settings", R.string.nav_settings)
@@ -45,12 +46,12 @@ sealed class Destination(val route: String, @StringRes val labelRes: Int) {
          * INSTANCE assignée → liste avec des éléments `null` (NPE au runtime).
          */
         val drawerDestinations: List<Destination>
-            get() = listOf(Home, CardBrowser, Collection, GameMenu, DeckBuilder, Social, Settings)
+            get() = listOf(Home, CardBrowser, Collection, Statistics, GameMenu, DeckBuilder, Social, Settings)
 
         private val allDestinations: List<Destination>
             get() = listOf(
                 Home, GameMenu, GameSetup, GameTracker, GameHistory,
-                CardBrowser, Collection, DeckBuilder, Social, Room, Global, Settings,
+                CardBrowser, Collection, Statistics, DeckBuilder, Social, Room, Global, Settings,
             )
 
         /** Titre de la barre supérieure pour une route donnée. */

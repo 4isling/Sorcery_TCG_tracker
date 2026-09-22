@@ -9,4 +9,6 @@ data class GameRecord(
     val playerTwoAvatar: String?,
     val winner: PlayerId?,
     val turns: Int,
+    /** Durée de la partie en secondes ; null si inconnue (parties antérieures au suivi). */
+    val durationSeconds: Int? = null,
 )

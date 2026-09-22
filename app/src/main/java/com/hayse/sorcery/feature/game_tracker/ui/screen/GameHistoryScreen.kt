@@ -76,6 +76,15 @@ private fun GameRecordCard(record: GameRecord) {
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(stringResource(R.string.game_history_turns, record.turns), style = MaterialTheme.typography.bodySmall)
+            record.durationSeconds?.let { seconds ->
+                Text(
+                    text = stringResource(
+                        R.string.game_history_duration,
+                        stringResource(R.string.stat_duration_minutes, seconds / 60, seconds % 60),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }

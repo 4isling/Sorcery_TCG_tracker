@@ -20,6 +20,7 @@ data class GameRecordData(
     /** Nom d'enum de PlayerId, ou null pour un nul/abandon. */
     val winner: String? = null,
     val turns: Int,
+    val durationSeconds: Int? = null,
 )
 
 fun GameRecord.toData(): GameRecordData = GameRecordData(
@@ -30,6 +31,7 @@ fun GameRecord.toData(): GameRecordData = GameRecordData(
     playerTwoAvatar = playerTwoAvatar,
     winner = winner?.name,
     turns = turns,
+    durationSeconds = durationSeconds,
 )
 
 fun GameRecordData.toDomain(): GameRecord = GameRecord(
@@ -40,4 +42,5 @@ fun GameRecordData.toDomain(): GameRecord = GameRecord(
     playerTwoAvatar = playerTwoAvatar,
     winner = winner?.let { PlayerId.valueOf(it) },
     turns = turns,
+    durationSeconds = durationSeconds,
 )

@@ -7,6 +7,7 @@ import com.hayse.sorcery.feature.deckformat.di.deckFormatModule
 import com.hayse.sorcery.feature.game_tracker.di.gameTrackerModule
 import com.hayse.sorcery.feature.settings.di.settingsModule
 import com.hayse.sorcery.feature.social.di.socialModule
+import com.hayse.sorcery.feature.statistics.di.statisticsModule
 import org.koin.core.module.Module
 
 // Agrège les modules Koin par feature.
@@ -18,4 +19,5 @@ val featureModules: List<Module> = listOf(
     deckFormatModule,
     settingsModule,
     socialModule,
+    statisticsModule,
 )
