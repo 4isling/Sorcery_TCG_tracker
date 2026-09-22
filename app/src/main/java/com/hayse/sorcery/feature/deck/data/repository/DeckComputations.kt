@@ -4,6 +4,7 @@ import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.feature.cards.data.local.entity.CardWithPrintings
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
 import com.hayse.sorcery.feature.cards.data.repository.toCard
+import com.hayse.sorcery.feature.cards.domain.model.Card
 import com.hayse.sorcery.feature.deck.data.local.entity.DeckCardEntity
 import com.hayse.sorcery.feature.deck.data.local.entity.DeckEntity
 import com.hayse.sorcery.feature.deck.domain.model.DeckDetail
@@ -13,6 +14,7 @@ import com.hayse.sorcery.feature.deck.domain.model.DeckSection
 import com.hayse.sorcery.feature.deck.domain.model.DeckSummary
 import com.hayse.sorcery.feature.deck.domain.model.DeckValidator
 import com.hayse.sorcery.feature.deck.domain.model.deckSectionOf
+import com.hayse.sorcery.feature.deck.domain.model.isCollectionEligible
 
 /** Assemble les entités deck + catalogue + collection en modèles de domaine enrichis de la possession. */
 object DeckComputations {
@@ -27,11 +29,8 @@ object DeckComputations {
         val ownedByCard = ownedByCard(allCards, entries)
         val cardByName = allCards.associate { it.card.name to it.toCard(imageUriForSlugs) }
         val setByName = allCards.associate { it.card.name to it.printings.firstOrNull()?.setName }
-        val deckEntries = deckCards.mapNotNull { dc ->
-            val card = cardByName[dc.cardName] ?: return@mapNotNull null
-            DeckEntry(card = card, quantity = dc.quantity, owned = ownedByCard[dc.cardName] ?: 0)
-        }.sortedBy { it.card.name }
-        val avatarName = deckEntries.firstOrNull { deckSectionOf(it.card.type) == DeckSection.Avatar }?.card?.name
+        val deckEntries = deckEntries(deckCards, cardByName, ownedByCard).sortedBy { it.card.name }
+        val avatarName = deckEntries.firstOrNull { it.section == DeckSection.Avatar }?.card?.name
         return DeckDetail(
             id = deck.id,
             name = deck.name,
@@ -54,11 +53,9 @@ object DeckComputations {
         val byDeck = allDeckCards.groupBy { it.deckId }
         return decks.map { deck ->
             val format = DeckFormat.fromId(deck.format)
-            val deckEntries = byDeck[deck.id].orEmpty().mapNotNull { dc ->
-                val card = cardByName[dc.cardName] ?: return@mapNotNull null
-                DeckEntry(card = card, quantity = dc.quantity, owned = ownedByCard[dc.cardName] ?: 0)
-            }
-            val avatar = deckEntries.firstOrNull { deckSectionOf(it.card.type) == DeckSection.Avatar }
+            val deckEntries = deckEntries(byDeck[deck.id].orEmpty(), cardByName, ownedByCard)
+            val avatar = deckEntries.firstOrNull { it.section == DeckSection.Avatar }
+            fun countIn(section: DeckSection) = deckEntries.filter { it.section == section }.sumOf { it.quantity }
             DeckSummary(
                 id = deck.id,
                 name = deck.name,
@@ -66,14 +63,20 @@ object DeckComputations {
                 avatarName = avatar?.card?.name,
                 avatarSetName = avatar?.card?.name?.let { setByName[it] },
                 avatarImageUri = avatar?.card?.imageUri,
-                spellbookCount = deckEntries.filter { deckSectionOf(it.card.type) == DeckSection.Spellbook }.sumOf { it.quantity },
-                atlasCount = deckEntries.filter { deckSectionOf(it.card.type) == DeckSection.Atlas }.sumOf { it.quantity },
+                spellbookCount = countIn(DeckSection.Spellbook),
+                atlasCount = countIn(DeckSection.Atlas),
+                collectionCount = countIn(DeckSection.Collection),
                 isLegal = DeckValidator.validate(format, deckEntries).isLegal,
                 updatedAt = deck.updatedAt,
             )
         }
     }
 
+    /**
+     * Catalogue avec la quantité dans le deck pour chaque carte. Quand [section] est la Collection,
+     * seules les cartes éligibles (ni Avatar ni jeton) apparaissent, avec leur quantité en Collection ;
+     * sinon la quantité est celle du deck principal et la zone découle du type de la carte.
+     */
     fun catalog(
         deckCards: List<DeckCardEntity>,
         cards: List<CardWithPrintings>,
@@ -83,15 +86,44 @@ object DeckComputations {
         imageUriForSlugs: (List<String>) -> String?,
     ): List<DeckEntry> {
         val ownedByCard = ownedByCard(cards, entries)
-        val inDeck = deckCards.associate { it.cardName to it.quantity }
+        val byName = deckCards.associateBy { it.cardName }
+        val forCollection = section == DeckSection.Collection
         return cards.asSequence()
             .map { cwp ->
                 val card = cwp.toCard(imageUriForSlugs)
-                DeckEntry(card = card, quantity = inDeck[card.name] ?: 0, owned = ownedByCard[card.name] ?: 0)
+                val stored = byName[card.name]
+                DeckEntry(
+                    card = card,
+                    quantity = (if (forCollection) stored?.collectionQuantity else stored?.quantity) ?: 0,
+                    owned = ownedByCard[card.name] ?: 0,
+                    section = if (forCollection) DeckSection.Collection else deckSectionOf(card.type),
+                )
             }
-            .filter { section == null || deckSectionOf(it.card.type) == section }
+            .filter {
+                when {
+                    forCollection -> isCollectionEligible(it.card.type)
+                    section == null -> true
+                    else -> it.section == section
+                }
+            }
             .filter { keepByOwnership(it, ownership) }
             .toList()
+    }
+
+    /** Une entité peut produire deux entrées : deck principal (zone déduite du type) et Collection. */
+    private fun deckEntries(
+        deckCards: List<DeckCardEntity>,
+        cardByName: Map<String, Card>,
+        ownedByCard: Map<String, Int>,
+    ): List<DeckEntry> = deckCards.flatMap { dc ->
+        val card = cardByName[dc.cardName] ?: return@flatMap emptyList()
+        val owned = ownedByCard[dc.cardName] ?: 0
+        buildList {
+            if (dc.quantity > 0) add(DeckEntry(card = card, quantity = dc.quantity, owned = owned))
+            if (dc.collectionQuantity > 0) {
+                add(DeckEntry(card = card, quantity = dc.collectionQuantity, owned = owned, section = DeckSection.Collection))
+            }
+        }
     }
 
     private fun keepByOwnership(entry: DeckEntry, ownership: Ownership): Boolean = when (ownership) {

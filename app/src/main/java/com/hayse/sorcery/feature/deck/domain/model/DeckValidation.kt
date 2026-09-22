@@ -11,6 +11,7 @@ sealed interface DeckIssueMessage {
     data class TooManyAvatars(val count: Int) : DeckIssueMessage
     data class SpellbookTooSmall(val count: Int, val min: Int) : DeckIssueMessage
     data class AtlasTooSmall(val count: Int, val min: Int) : DeckIssueMessage
+    data class CollectionTooLarge(val count: Int, val max: Int) : DeckIssueMessage
     data class BannedRarity(val cardName: String, val rarity: String) : DeckIssueMessage
     data class TooManyCopies(val cardName: String, val quantity: Int, val limit: Int) : DeckIssueMessage
 }
@@ -32,15 +33,21 @@ data class DeckValidation(
     val isLegal: Boolean get() = issues.none { it.severity == DeckIssueSeverity.Error }
 }
 
-/** Confronte le contenu d'un deck aux règles de son format. */
+/**
+ * Confronte le contenu d'un deck aux règles de son format. Les entrées portent leur zone
+ * ([DeckEntry.section]) : le deck principal a des minimums, la Collection un maximum, et la
+ * limite de copies par rareté s'applique à la somme des zones pour une même carte.
+ */
 object DeckValidator {
 
     fun validate(format: DeckFormat, entries: List<DeckEntry>): DeckValidation {
         val issues = mutableListOf<DeckIssue>()
 
-        val avatarCount = entries.filter { deckSectionOf(it.card.type) == DeckSection.Avatar }.sumOf { it.quantity }
-        val spellbookCount = entries.filter { deckSectionOf(it.card.type) == DeckSection.Spellbook }.sumOf { it.quantity }
-        val atlasCount = entries.filter { deckSectionOf(it.card.type) == DeckSection.Atlas }.sumOf { it.quantity }
+        fun countIn(section: DeckSection) = entries.filter { it.section == section }.sumOf { it.quantity }
+        val avatarCount = countIn(DeckSection.Avatar)
+        val spellbookCount = countIn(DeckSection.Spellbook)
+        val atlasCount = countIn(DeckSection.Atlas)
+        val collectionCount = countIn(DeckSection.Collection)
 
         when {
             avatarCount == 0 ->
@@ -71,26 +78,37 @@ object DeckValidator {
                 section = DeckSection.Atlas,
             )
         }
-
-        entries.forEach { entry ->
-            if (deckSectionOf(entry.card.type) == DeckSection.Avatar) return@forEach
-            val rarity = entry.card.rarity
-            if (rarity != null && rarity in format.bannedRarities) {
-                issues += DeckIssue(
-                    DeckIssueSeverity.Error,
-                    DeckIssueMessage.BannedRarity(entry.card.name, rarity.name),
-                    cardName = entry.card.name,
-                )
-            }
-            val limit = format.copyLimit(rarity)
-            if (entry.quantity > limit) {
-                issues += DeckIssue(
-                    DeckIssueSeverity.Error,
-                    DeckIssueMessage.TooManyCopies(entry.card.name, entry.quantity, limit),
-                    cardName = entry.card.name,
-                )
-            }
+        if (collectionCount > format.maxCollection) {
+            issues += DeckIssue(
+                DeckIssueSeverity.Error,
+                DeckIssueMessage.CollectionTooLarge(collectionCount, format.maxCollection),
+                section = DeckSection.Collection,
+            )
         }
+
+        entries
+            .filter { it.section != DeckSection.Avatar }
+            .groupBy { it.card.name }
+            .forEach { (cardName, lines) ->
+                val card = lines.first().card
+                val rarity = card.rarity
+                if (rarity != null && rarity in format.bannedRarities) {
+                    issues += DeckIssue(
+                        DeckIssueSeverity.Error,
+                        DeckIssueMessage.BannedRarity(cardName, rarity.name),
+                        cardName = cardName,
+                    )
+                }
+                val limit = format.copyLimit(rarity)
+                val copies = lines.sumOf { it.quantity }
+                if (copies > limit) {
+                    issues += DeckIssue(
+                        DeckIssueSeverity.Error,
+                        DeckIssueMessage.TooManyCopies(cardName, copies, limit),
+                        cardName = cardName,
+                    )
+                }
+            }
 
         return DeckValidation(issues)
     }

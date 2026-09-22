@@ -35,8 +35,8 @@ interface DeckDao {
     @Query("SELECT * FROM deck_cards WHERE deckId = :deckId")
     fun observeDeckCards(deckId: Long): Flow<List<DeckCardEntity>>
 
-    @Query("SELECT quantity FROM deck_cards WHERE deckId = :deckId AND cardName = :cardName")
-    suspend fun getQuantity(deckId: Long, cardName: String): Int?
+    @Query("SELECT * FROM deck_cards WHERE deckId = :deckId AND cardName = :cardName LIMIT 1")
+    suspend fun getEntry(deckId: Long, cardName: String): DeckCardEntity?
 
     @Upsert
     suspend fun upsert(entry: DeckCardEntity)

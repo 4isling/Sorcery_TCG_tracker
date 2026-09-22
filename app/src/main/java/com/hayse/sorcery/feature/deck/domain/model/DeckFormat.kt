@@ -7,6 +7,8 @@ import com.hayse.sorcery.core.shared.model.Rarity
  * revient à déclarer une nouvelle instance dans [all], sans toucher au validateur.
  *
  * - [minSpellbook] / [minAtlas] : tailles minimales du grimoire (sorts) et de l'atlas (sites).
+ * - [maxCollection] : taille maximale de la Collection (réserve de sorts/sites, 10 en Sorcery).
+ *   Les copies en Collection comptent avec celles du deck principal dans la limite par rareté.
  * - [maxAvatar] : nombre d'Avatars autorisés (Sorcery : exactement 1).
  * - [bannedRarities] : raretés interdites dans ce format (ex. un format sans Unique).
  * - [copyLimitOverride] : plafond de copies commun s'il remplace les limites par rareté (sinon null).
@@ -16,6 +18,7 @@ data class DeckFormat(
     val label: String,
     val minSpellbook: Int,
     val minAtlas: Int,
+    val maxCollection: Int,
     val maxAvatar: Int,
     val bannedRarities: Set<Rarity>,
     val copyLimitOverride: Int?,
@@ -32,6 +35,7 @@ data class DeckFormat(
             label = "Constructed",
             minSpellbook = 60,
             minAtlas = 30,
+            maxCollection = 10,
             maxAvatar = 1,
             bannedRarities = emptySet(),
             copyLimitOverride = null,

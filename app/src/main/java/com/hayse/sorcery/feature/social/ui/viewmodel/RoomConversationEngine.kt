@@ -2,6 +2,7 @@ package com.hayse.sorcery.feature.social.ui.viewmodel
 
 import com.hayse.sorcery.feature.collection.domain.model.CollectionFilter
 import com.hayse.sorcery.feature.collection.domain.repository.CollectionRepository
+import com.hayse.sorcery.feature.deck.domain.model.DeckEntry
 import com.hayse.sorcery.feature.deck.domain.model.DeckFormat
 import com.hayse.sorcery.feature.deck.domain.repository.DeckRepository
 import com.hayse.sorcery.feature.social.data.p2p.TradeSuggestionComputations
@@ -115,7 +116,8 @@ class RoomConversationEngine(
 
             is RoomMessage.DeckSnapshot -> {
                 val cards = catalog.resolve(message.entries.toMatchLines())
-                val deck = ReceivedDeck(message.name, DeckFormat.fromId(message.formatId), cards)
+                val collection = catalog.resolve(message.collection.toMatchLines())
+                val deck = ReceivedDeck(message.name, DeckFormat.fromId(message.formatId), cards, collection)
                 state.update { st ->
                     st.copy(peerDecks = st.peerDecks.filterNot { it.name == deck.name } + deck)
                 }
@@ -176,11 +178,12 @@ class RoomConversationEngine(
         scope.launch {
             val detail = decks.observeDeck(deckId).first() ?: return@launch
             val printingsByCard = catalog.suggestionCatalog().printingsByCard
-            val entries = detail.entries.mapNotNull { entry ->
+            fun List<DeckEntry>.toPayload() = mapNotNull { entry ->
                 val slug = printingsByCard[entry.card.name]?.firstOrNull() ?: return@mapNotNull null
                 PayloadEntry(slug, "", entry.quantity)
             }
-            send(RoomMessage.DeckSnapshot(detail.name, detail.format.id, entries))
+            val (collection, main) = detail.entries.partition { it.inCollection }
+            send(RoomMessage.DeckSnapshot(detail.name, detail.format.id, main.toPayload(), collection.toPayload()))
         }
     }
 
@@ -193,6 +196,11 @@ class RoomConversationEngine(
             deck.cards
                 .groupBy { it.card.name }
                 .forEach { (cardName, lines) -> decks.setCardQuantity(deckId, cardName, lines.sumOf { it.quantity }) }
+            deck.collection
+                .groupBy { it.card.name }
+                .forEach { (cardName, lines) ->
+                    decks.setCardQuantity(deckId, cardName, lines.sumOf { it.quantity }, inCollection = true)
+                }
         }
     }
 

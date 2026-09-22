@@ -23,8 +23,10 @@ data class DeckEditorViewState(
     val avatar: DeckEntry? = null,
     val spellbook: List<DeckEntry> = emptyList(),
     val atlas: List<DeckEntry> = emptyList(),
+    val collection: List<DeckEntry> = emptyList(),
     val spellbookCount: Int = 0,
     val atlasCount: Int = 0,
+    val collectionCount: Int = 0,
     val missingCount: Int = 0,
     val validation: DeckValidation = DeckValidation(emptyList()),
     val tab: DeckEditorTab = DeckEditorTab.Deck,
@@ -32,4 +34,6 @@ data class DeckEditorViewState(
     val availableTypes: List<String> = emptyList(),
     val availableSets: List<String> = emptyList(),
     val catalog: List<DeckEntry> = emptyList(),
+    /** Vrai entre un changement de filtre et l'arrivée du catalogue correspondant. */
+    val catalogLoading: Boolean = false,
 )

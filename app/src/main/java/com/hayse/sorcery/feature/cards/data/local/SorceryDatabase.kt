@@ -2,6 +2,9 @@ package com.hayse.sorcery.feature.cards.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import com.hayse.sorcery.feature.cards.data.local.dao.CardDao
 import com.hayse.sorcery.feature.cards.data.local.entity.CardEntity
 import com.hayse.sorcery.feature.cards.data.local.entity.CollectionEntryEntity
@@ -26,7 +29,7 @@ import com.hayse.sorcery.feature.social.data.local.entity.WantedEntryEntity
         WantedEntryEntity::class,
         SavedTradeEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class SorceryDatabase : RoomDatabase() {
@@ -34,4 +37,15 @@ abstract class SorceryDatabase : RoomDatabase() {
     abstract fun collectionDao(): CollectionDao
     abstract fun deckDao(): DeckDao
     abstract fun socialDao(): SocialDao
+
+    companion object {
+        /** v6 : zone « collection » (réserve de 10 cartes) des decks, sans perdre les données existantes. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(connection: SQLiteConnection) {
+                connection.execSQL(
+                    "ALTER TABLE deck_cards ADD COLUMN collectionQuantity INTEGER NOT NULL DEFAULT 0",
+                )
+            }
+        }
+    }
 }

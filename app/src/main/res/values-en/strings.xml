@@ -31,7 +31,7 @@
     <string name="core_counter_decrement">Decrease</string>
     <string name="core_counter_increment">Increase</string>    <string name="deck_delete">Delete</string>
     <string name="deck_no_avatar">No Avatar</string>
-    <string name="deck_summary_counts">%1$s · %2$d spells · %3$d sites</string>
+    <string name="deck_summary_counts">%1$s · %2$d spells · %3$d sites · %4$d in collection</string>
     <string name="deck_legal">Legal</string>
     <string name="deck_incomplete">Incomplete</string>
     <string name="deck_owned_missing">Owned %1$d/%2$d · %3$d to acquire%4$s</string>
@@ -48,6 +48,7 @@
     <string name="deck_section_avatar">Avatar</string>
     <string name="deck_section_spellbook">Spellbook</string>
     <string name="deck_section_atlas">Atlas</string>
+    <string name="deck_section_collection">Collection</string>
     <string name="deck_not_found">Deck not found</string>
     <string name="deck_name_label">Deck name</string>
     <string name="deck_tab_deck">Deck</string>
@@ -211,6 +212,7 @@
     <string name="deck_issue_too_many_avatars">Only one Avatar allowed (%1$d selected).</string>
     <string name="deck_issue_spellbook_min">Spellbook: %1$d/%2$d spells minimum.</string>
     <string name="deck_issue_atlas_min">Atlas: %1$d/%2$d sites minimum.</string>
+    <string name="deck_issue_collection_max">Collection: %1$d cards (max %2$d).</string>
     <string name="deck_issue_banned_rarity">%1$s: %2$s rarity not allowed in this format.</string>
     <string name="deck_issue_copies_max">%1$s: %2$d copies (max %3$d).</string>
     <string name="nav_social">Trades</string>

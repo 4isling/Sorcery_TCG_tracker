@@ -17,8 +17,10 @@ data class ReceivedDeck(
     val name: String,
     val format: DeckFormat,
     val cards: List<TradeCardLine>,
+    /** Cartes de la Collection (réserve de 10 cartes), enregistrées dans leur zone. */
+    val collection: List<TradeCardLine> = emptyList(),
 ) {
-    val cardCount: Int get() = cards.sumOf { it.quantity }
+    val cardCount: Int get() = cards.sumOf { it.quantity } + collection.sumOf { it.quantity }
 }
 
 /** Une carte suggérée à l'échange, résolue pour l'affichage. */

@@ -249,6 +249,6 @@ private object NoopDeckRepository : DeckRepository {
     override suspend fun createDeck(name: String, format: DeckFormat): Long = 0L
     override suspend fun renameDeck(deckId: Long, name: String) = Unit
     override suspend fun deleteDeck(deckId: Long) = Unit
-    override suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int) = Unit
-    override suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int) = Unit
+    override suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int, inCollection: Boolean) = Unit
+    override suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int, inCollection: Boolean) = Unit
 }

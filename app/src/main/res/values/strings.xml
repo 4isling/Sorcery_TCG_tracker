@@ -32,7 +32,7 @@
     <string name="core_counter_decrement">Décrémenter</string>
     <string name="core_counter_increment">Incrémenter</string>    <string name="deck_delete">Supprimer</string>
     <string name="deck_no_avatar">Sans Avatar</string>
-    <string name="deck_summary_counts">%1$s · %2$d sorts · %3$d sites</string>
+    <string name="deck_summary_counts">%1$s · %2$d sorts · %3$d sites · %4$d en collection</string>
     <string name="deck_legal">Légal</string>
     <string name="deck_incomplete">Incomplet</string>
     <string name="deck_owned_missing">Possédées %1$d/%2$d · %3$d à acquérir%4$s</string>
@@ -49,6 +49,7 @@
     <string name="deck_section_avatar">Avatar</string>
     <string name="deck_section_spellbook">Grimoire</string>
     <string name="deck_section_atlas">Atlas</string>
+    <string name="deck_section_collection">Collection</string>
     <string name="deck_not_found">Deck introuvable</string>
     <string name="deck_name_label">Nom du deck</string>
     <string name="deck_tab_deck">Deck</string>
@@ -271,6 +272,7 @@
     <string name="deck_issue_too_many_avatars">Un seul Avatar autorisé (%1$d sélectionnés).</string>
     <string name="deck_issue_spellbook_min">Grimoire : %1$d/%2$d sorts minimum.</string>
     <string name="deck_issue_atlas_min">Atlas : %1$d/%2$d sites minimum.</string>
+    <string name="deck_issue_collection_max">Collection : %1$d cartes (max %2$d).</string>
     <string name="deck_issue_banned_rarity">%1$s : rareté %2$s interdite dans ce format.</string>
     <string name="deck_issue_copies_max">%1$s : %2$d copies (max %3$d).</string>
     <string name="nav_social">Échanges</string>

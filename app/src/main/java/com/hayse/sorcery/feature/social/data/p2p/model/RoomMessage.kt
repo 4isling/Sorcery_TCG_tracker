@@ -50,6 +50,7 @@ sealed interface RoomMessage {
      * Un deck partagé avec le pair : son nom, son format ([formatId]) et ses cartes. Chaque carte est
      * référencée par une impression représentative ; le pair résout le nom localement pour l'afficher
      * ou enregistrer le deck (un deck raisonne en identité de carte, pas en impression précise).
+     * [entries] est le deck principal, [collection] la réserve de 10 cartes (vide pour un pair ancien).
      */
     @Serializable
     @SerialName("deck")
@@ -57,6 +58,7 @@ sealed interface RoomMessage {
         val name: String,
         val formatId: String,
         val entries: List<PayloadEntry> = emptyList(),
+        val collection: List<PayloadEntry> = emptyList(),
     ) : RoomMessage
 
     /** Proposition d'échange concrète, identifiée par [offerId] du point de vue de l'émetteur. */

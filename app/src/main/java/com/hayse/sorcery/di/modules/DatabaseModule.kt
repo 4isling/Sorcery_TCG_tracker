@@ -6,6 +6,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 // Base Room partagée (cartes M2, collection M3). Peuplée au premier lancement via CardCatalogSeeder.
+// Les migrations connues préservent les données ; à défaut, la base est recréée (fallback destructif).
 val databaseModule = module {
     single {
         Room.databaseBuilder(
@@ -13,6 +14,7 @@ val databaseModule = module {
             SorceryDatabase::class.java,
             "sorcery.db",
         )
+            .addMigrations(SorceryDatabase.MIGRATION_5_6)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }

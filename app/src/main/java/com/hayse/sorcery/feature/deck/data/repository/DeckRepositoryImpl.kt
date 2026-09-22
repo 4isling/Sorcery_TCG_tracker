@@ -84,14 +84,20 @@ class DeckRepositoryImpl(
 
     override suspend fun deleteDeck(deckId: Long) = deckDao.deleteDeck(deckId)
 
-    override suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int) {
-        if (quantity <= 0) deckDao.delete(deckId, cardName)
-        else deckDao.upsert(DeckCardEntity(deckId, cardName, quantity))
+    override suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int, inCollection: Boolean) {
+        val current = deckDao.getEntry(deckId, cardName) ?: DeckCardEntity(deckId, cardName, quantity = 0)
+        val updated = if (inCollection) {
+            current.copy(collectionQuantity = quantity.coerceAtLeast(0))
+        } else {
+            current.copy(quantity = quantity.coerceAtLeast(0))
+        }
+        if (updated.isEmpty) deckDao.delete(deckId, cardName) else deckDao.upsert(updated)
         deckDao.touch(deckId, System.currentTimeMillis())
     }
 
-    override suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int) {
-        val current = deckDao.getQuantity(deckId, cardName) ?: 0
-        setCardQuantity(deckId, cardName, current + delta)
+    override suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int, inCollection: Boolean) {
+        val current = deckDao.getEntry(deckId, cardName)
+        val quantity = (if (inCollection) current?.collectionQuantity else current?.quantity) ?: 0
+        setCardQuantity(deckId, cardName, quantity + delta, inCollection)
     }
 }

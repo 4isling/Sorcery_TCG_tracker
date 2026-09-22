@@ -88,6 +88,7 @@ fun DeckSummaryRow(
                         summary.format.label,
                         summary.spellbookCount,
                         summary.atlasCount,
+                        summary.collectionCount,
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -109,10 +110,21 @@ fun DeckSummaryRow(
     }
 }
 
-/** En-tête de section (Avatar / Grimoire / Atlas) avec compteur et minimum éventuel. */
+/**
+ * En-tête de section (Avatar / Grimoire / Atlas / Collection) avec compteur et borne éventuelle :
+ * [minimum] à atteindre (deck principal) ou [maximum] à ne pas dépasser (Collection).
+ */
 @Composable
-fun SectionHeader(title: String, count: Int, minimum: Int? = null, onClick: (() -> Unit)? = null) {
-    val label = if (minimum != null) "$count / $minimum" else count.toString()
+fun SectionHeader(
+    title: String,
+    count: Int,
+    minimum: Int? = null,
+    maximum: Int? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    val bound = minimum ?: maximum
+    val label = if (bound != null) "$count / $bound" else count.toString()
+    val outOfBounds = (minimum != null && count < minimum) || (maximum != null && count > maximum)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,21 +141,17 @@ fun SectionHeader(title: String, count: Int, minimum: Int? = null, onClick: (() 
         Text(
             text = label,
             style = MaterialTheme.typography.titleSmall,
-            color = if (minimum != null && count < minimum) {
-                MaterialTheme.colorScheme.error
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
+            color = if (outOfBounds) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
-/** Ligne d'une carte du deck : image + nom + possession + stepper de quantité. */
+/** Ligne d'une carte du deck : image + nom + possession + stepper de quantité (dans la zone de l'entrée). */
 @Composable
 fun DeckEntryRow(
     entry: DeckEntry,
     onClick: () -> Unit,
-    onAdjust: (cardName: String, delta: Int) -> Unit,
+    onAdjust: (entry: DeckEntry, delta: Int) -> Unit,
 ) {
     SkinnedCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
@@ -170,7 +178,7 @@ fun DeckEntryRow(
             }
             CounterStepper(
                 value = entry.quantity,
-                onValueChange = { newValue -> onAdjust(entry.card.name, newValue - entry.quantity) },
+                onValueChange = { newValue -> onAdjust(entry, newValue - entry.quantity) },
                 min = 0,
             )
         }
@@ -221,7 +229,7 @@ fun ValidationSummary(validation: DeckValidation, onFixIssue: (DeckIssue) -> Uni
     }
 }
 
-/** Filtres du catalogue : possession + élément (rapides) puis type / rareté / set (repliables). */
+/** Filtres du catalogue : zone cible, possession + élément (rapides) puis type / rareté / set (repliables). */
 @Composable
 fun DeckFilterBar(
     filter: DeckCatalogFilter,
@@ -232,7 +240,7 @@ fun DeckFilterBar(
     onType: (String?) -> Unit,
     onRarity: (Rarity?) -> Unit,
     onSet: (String?) -> Unit,
-    onClearSection: () -> Unit,
+    onSection: (DeckSection?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(
@@ -241,12 +249,13 @@ fun DeckFilterBar(
             .animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        filter.section?.let { section ->
-            ChipRow {
+        // Zone cible : filtre le catalogue et détermine où le + ajoute la carte (Collection = réserve).
+        ChipRow {
+            DeckSection.entries.forEach { section ->
                 FilterChip(
-                    selected = true,
-                    onClick = onClearSection,
-                    label = { Text("${sectionLabel(section)} ✕") },
+                    selected = filter.section == section,
+                    onClick = { onSection(if (filter.section == section) null else section) },
+                    label = { Text(sectionLabel(section)) },
                 )
             }
         }
@@ -343,6 +352,7 @@ private fun sectionLabel(section: DeckSection): String = when (section) {
     DeckSection.Avatar -> stringResource(R.string.deck_section_avatar)
     DeckSection.Spellbook -> stringResource(R.string.deck_section_spellbook)
     DeckSection.Atlas -> stringResource(R.string.deck_section_atlas)
+    DeckSection.Collection -> stringResource(R.string.deck_section_collection)
 }
 
 @Composable
@@ -351,6 +361,7 @@ private fun DeckIssueMessage.text(): String = when (this) {
     is DeckIssueMessage.TooManyAvatars -> stringResource(R.string.deck_issue_too_many_avatars, count)
     is DeckIssueMessage.SpellbookTooSmall -> stringResource(R.string.deck_issue_spellbook_min, count, min)
     is DeckIssueMessage.AtlasTooSmall -> stringResource(R.string.deck_issue_atlas_min, count, min)
+    is DeckIssueMessage.CollectionTooLarge -> stringResource(R.string.deck_issue_collection_max, count, max)
     is DeckIssueMessage.BannedRarity -> stringResource(R.string.deck_issue_banned_rarity, cardName, rarity)
     is DeckIssueMessage.TooManyCopies -> stringResource(R.string.deck_issue_copies_max, cardName, quantity, limit)
 }

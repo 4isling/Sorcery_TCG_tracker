@@ -31,7 +31,7 @@
     <string name="core_counter_decrement">Disminuir</string>
     <string name="core_counter_increment">Aumentar</string>    <string name="deck_delete">Eliminar</string>
     <string name="deck_no_avatar">Sin Avatar</string>
-    <string name="deck_summary_counts">%1$s · %2$d hechizos · %3$d sitios</string>
+    <string name="deck_summary_counts">%1$s · %2$d hechizos · %3$d sitios · %4$d en colección</string>
     <string name="deck_legal">Legal</string>
     <string name="deck_incomplete">Incompleto</string>
     <string name="deck_owned_missing">En posesión %1$d/%2$d · %3$d por adquirir%4$s</string>
@@ -48,6 +48,7 @@
     <string name="deck_section_avatar">Avatar</string>
     <string name="deck_section_spellbook">Grimorio</string>
     <string name="deck_section_atlas">Atlas</string>
+    <string name="deck_section_collection">Colección</string>
     <string name="deck_not_found">Mazo no encontrado</string>
     <string name="deck_name_label">Nombre del mazo</string>
     <string name="deck_tab_deck">Mazo</string>
@@ -211,6 +212,7 @@
     <string name="deck_issue_too_many_avatars">Solo se permite un Avatar (%1$d seleccionados).</string>
     <string name="deck_issue_spellbook_min">Grimorio: %1$d/%2$d hechizos mínimo.</string>
     <string name="deck_issue_atlas_min">Atlas: %1$d/%2$d sitios mínimo.</string>
+    <string name="deck_issue_collection_max">Colección: %1$d cartas (máx. %2$d).</string>
     <string name="deck_issue_banned_rarity">%1$s: rareza %2$s no permitida en este formato.</string>
     <string name="deck_issue_copies_max">%1$s: %2$d copias (máx. %3$d).</string>
     <string name="nav_social">Intercambios</string>

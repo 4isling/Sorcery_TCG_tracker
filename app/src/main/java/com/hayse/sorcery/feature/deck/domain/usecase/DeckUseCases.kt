@@ -35,11 +35,11 @@ class DeleteDeckUseCase(private val repository: DeckRepository) {
 }
 
 class SetDeckCardQuantityUseCase(private val repository: DeckRepository) {
-    suspend operator fun invoke(deckId: Long, cardName: String, quantity: Int) =
-        repository.setCardQuantity(deckId, cardName, quantity)
+    suspend operator fun invoke(deckId: Long, cardName: String, quantity: Int, inCollection: Boolean = false) =
+        repository.setCardQuantity(deckId, cardName, quantity, inCollection)
 }
 
 class AdjustDeckCardQuantityUseCase(private val repository: DeckRepository) {
-    suspend operator fun invoke(deckId: Long, cardName: String, delta: Int) =
-        repository.adjustCardQuantity(deckId, cardName, delta)
+    suspend operator fun invoke(deckId: Long, cardName: String, delta: Int, inCollection: Boolean = false) =
+        repository.adjustCardQuantity(deckId, cardName, delta, inCollection)
 }

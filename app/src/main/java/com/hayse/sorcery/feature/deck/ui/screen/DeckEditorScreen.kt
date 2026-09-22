@@ -102,7 +102,8 @@ private fun DeckContent(
     ProvideCardList(
         listOfNotNull(state.avatar?.card?.name) +
             state.spellbook.map { it.card.name } +
-            state.atlas.map { it.card.name },
+            state.atlas.map { it.card.name } +
+            state.collection.map { it.card.name },
     )
     LazyColumn(
         contentPadding = PaddingValues(spacing.md),
@@ -156,7 +157,17 @@ private fun DeckContent(
         }
         deckEntries(state.atlas, viewModel, onCardClick)
 
-        if (state.avatar == null && state.spellbook.isEmpty() && state.atlas.isEmpty()) {
+        item(key = "__collection_header__") {
+            SectionHeader(
+                stringResource(R.string.deck_section_collection),
+                state.collectionCount,
+                maximum = state.format.maxCollection,
+                onClick = { viewModel.fillSection(DeckSection.Collection) },
+            )
+        }
+        deckEntries(state.collection, viewModel, onCardClick)
+
+        if (state.avatar == null && state.spellbook.isEmpty() && state.atlas.isEmpty() && state.collection.isEmpty()) {
             item(key = "__empty__") {
                 Text(
                     text = stringResource(R.string.deck_empty_hint),
@@ -196,10 +207,12 @@ private fun AddContent(
                 onType = viewModel::setType,
                 onRarity = viewModel::setRarity,
                 onSet = viewModel::setSet,
-                onClearSection = viewModel::clearSection,
+                onSection = viewModel::setSection,
             )
         }
-        if (state.catalog.isEmpty()) {
+        if (state.catalogLoading) {
+            item(key = "__loading__") { LoadingState(Modifier.fillMaxWidth().padding(vertical = spacing.md)) }
+        } else if (state.catalog.isEmpty()) {
             item(key = "__empty__") { EmptyState(title = stringResource(R.string.deck_no_card)) }
         } else {
             items(state.catalog, key = { it.card.name }) { entry ->
@@ -214,7 +227,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.deckEntries(
     viewModel: DeckEditorViewModel,
     onCardClick: (String) -> Unit,
 ) {
-    items(entries, key = { it.card.name }) { entry ->
+    // Une carte peut être à la fois dans le deck principal et dans la Collection : la clé porte la zone.
+    items(entries, key = { "${it.section}_${it.card.name}" }) { entry ->
         DeckEntryRow(entry, onClick = { onCardClick(entry.card.name) }, onAdjust = viewModel::adjust)
     }
 }

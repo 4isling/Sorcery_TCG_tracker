@@ -12,7 +12,11 @@ interface DeckRepository {
 
     fun observeDeck(deckId: Long): Flow<DeckDetail?>
 
-    /** Catalogue complet (filtré par [filter]) avec, pour chaque carte, sa quantité dans le deck et la possession. */
+    /**
+     * Catalogue complet (filtré par [filter]) avec, pour chaque carte, sa quantité dans le deck et la
+     * possession. Si la section filtrée est la Collection, la quantité est celle de la Collection ;
+     * sinon celle du deck principal.
+     */
     fun observeCatalog(deckId: Long, filter: DeckCatalogFilter): Flow<List<DeckEntry>>
 
     suspend fun availableTypes(): List<String>
@@ -25,7 +29,8 @@ interface DeckRepository {
 
     suspend fun deleteDeck(deckId: Long)
 
-    suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int)
+    /** Fixe le nombre de copies dans le deck principal ou, si [inCollection], dans la Collection. */
+    suspend fun setCardQuantity(deckId: Long, cardName: String, quantity: Int, inCollection: Boolean = false)
 
-    suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int)
+    suspend fun adjustCardQuantity(deckId: Long, cardName: String, delta: Int, inCollection: Boolean = false)
 }

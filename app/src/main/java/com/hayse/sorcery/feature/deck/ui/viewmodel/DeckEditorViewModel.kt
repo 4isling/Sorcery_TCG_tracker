@@ -6,6 +6,7 @@ import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.feature.deck.domain.model.DeckCatalogFilter
+import com.hayse.sorcery.feature.deck.domain.model.DeckEntry
 import com.hayse.sorcery.feature.deck.domain.model.DeckIssue
 import com.hayse.sorcery.feature.deck.domain.model.DeckSection
 import com.hayse.sorcery.feature.deck.domain.model.DeckValidator
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -67,8 +69,10 @@ class DeckEditorViewModel(
                             avatar = detail.avatar,
                             spellbook = detail.spellbook,
                             atlas = detail.atlas,
+                            collection = detail.collection,
                             spellbookCount = detail.spellbookCount,
                             atlasCount = detail.atlasCount,
+                            collectionCount = detail.collectionCount,
                             missingCount = detail.missingCount,
                             validation = DeckValidator.validate(detail.format, detail.entries),
                         )
@@ -77,9 +81,20 @@ class DeckEditorViewModel(
             }
             .launchIn(viewModelScope)
 
+        // Dès qu'un filtre change, le catalogue précédent est retiré de l'écran : ses lignes portent
+        // l'ancienne zone (ex. deck principal) et un + tapé dessus écrirait au mauvais endroit.
         _filter
-            .flatMapLatest { filter -> observeCatalog(deckId, filter).map { filter to it } }
-            .onEach { (filter, catalog) -> _state.update { it.copy(filter = filter, catalog = catalog) } }
+            .flatMapLatest { filter ->
+                observeCatalog(deckId, filter)
+                    .map<List<DeckEntry>, List<DeckEntry>?> { it }
+                    .onStart { emit(null) }
+                    .map { filter to it }
+            }
+            .onEach { (filter, catalog) ->
+                _state.update {
+                    it.copy(filter = filter, catalog = catalog.orEmpty(), catalogLoading = catalog == null)
+                }
+            }
             .launchIn(viewModelScope)
     }
 
@@ -91,7 +106,9 @@ class DeckEditorViewModel(
     fun setRarity(rarity: Rarity?) = _filter.update { it.copy(rarity = rarity) }
     fun setSet(setName: String?) = _filter.update { it.copy(setName = setName) }
     fun setOwnership(ownership: Ownership) = _filter.update { it.copy(ownership = ownership) }
-    fun clearSection() = _filter.update { it.copy(section = null) }
+
+    /** Zone cible de l'onglet Ajouter (null = tout le catalogue, ajouts dans le deck principal). */
+    fun setSection(section: DeckSection?) = _filter.update { it.copy(section = section) }
 
     /** Ouvre l'onglet Ajouter filtré sur la section dont on a cliqué l'en-tête. */
     fun fillSection(section: DeckSection) {
@@ -123,9 +140,10 @@ class DeckEditorViewModel(
         viewModelScope.launch { renameDeck(deckId, name.trim().ifBlank { "Deck sans nom" }) }
     }
 
-    fun adjust(cardName: String, delta: Int) =
-        viewModelScope.launch { adjustCard(deckId, cardName, delta) }
+    /** Ajuste la quantité de [entry] dans sa propre zone (deck principal ou Collection). */
+    fun adjust(entry: DeckEntry, delta: Int) =
+        viewModelScope.launch { adjustCard(deckId, entry.card.name, delta, entry.inCollection) }
 
-    fun setQuantity(cardName: String, quantity: Int) =
-        viewModelScope.launch { setCard(deckId, cardName, quantity) }
+    fun setQuantity(entry: DeckEntry, quantity: Int) =
+        viewModelScope.launch { setCard(deckId, entry.card.name, quantity, entry.inCollection) }
 }
