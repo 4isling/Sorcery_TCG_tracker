@@ -316,4 +316,80 @@
     <string name="saved_trades_done">Applied</string>
     <string name="saved_trades_apply">Apply</string>
     <string name="saved_trades_delete">Delete</string>
+
+    <!-- Minuteur de partie -->
+    <string name="game_timer_title">Timer</string>
+    <string name="game_timer_global">Global timer (match)</string>
+    <string name="game_timer_per_turn">Per-turn timer</string>
+    <string name="game_timer_minutes">Minutes</string>
+    <string name="game_timer_extra_turns">Sudden death turns</string>
+    <string name="game_timer_expiry_title">When time runs out</string>
+    <string name="game_timer_expiry_sudden_death">Sudden death (extra turns)</string>
+    <string name="game_timer_expiry_verdict">Immediate verdict (death threshold)</string>
+    <string name="game_timer_expiry_draw">Draw</string>
+    <string name="game_timer_expiry_none">Nothing (keep playing)</string>
+    <string name="game_timer_global_short">Match</string>
+    <string name="game_timer_turn_short">Turn</string>
+    <string name="game_timer_pause">Pause</string>
+    <string name="game_timer_resume">Resume</string>
+    <string name="game_timer_sudden_death">Sudden death — %1$d turn(s)</string>
+    <string name="game_timer_finished">Time\'s up</string>
+    <string name="game_timer_verdict_title">Time is up</string>
+    <string name="game_timer_verdict_winner">%1$s wins.</string>
+    <string name="game_timer_verdict_draw">Draw.</string>
+    <string name="game_timer_verdict_ok">OK</string>
+    <string name="game_history_duration">Duration: %1$s</string>
+
+    <!-- Collection / navigation -->
+    <string name="collection_foil_owned">✦ %1$d foil</string>
+    <string name="nav_statistics">Statistics</string>
+
+    <!-- Statistiques -->
+    <string name="stat_tab_collection">Collection</string>
+    <string name="stat_tab_games">Games</string>
+    <string name="stat_empty">No cards in your collection yet.</string>
+    <string name="stat_games_empty">No games recorded yet.</string>
+    <string name="stat_donut_cards">cards</string>
+    <string name="stat_donut_games">games</string>
+    <string name="stat_cards_count">%1$d cards</string>
+    <string name="stat_total_games">Games played</string>
+    <string name="stat_average_turns">Average turns</string>
+    <string name="stat_average_duration">Average duration</string>
+    <string name="stat_average_turn_duration">Average turn duration</string>
+    <string name="stat_duration_minutes">%1$d min %2$02d s</string>
+    <string name="stat_section_results">Results</string>
+    <string name="stat_section_avatars">Most played avatars</string>
+    <string name="stat_section_turns">Turn count</string>
+    <string name="stat_result_p1">P1 wins</string>
+    <string name="stat_result_p2">P2 wins</string>
+    <string name="stat_result_draw">Draws</string>
+    <string name="stat_total_cards">Cards owned</string>
+    <string name="stat_distinct_cards">Distinct cards</string>
+    <string name="stat_total_boosters">Boosters (equivalent)</string>
+    <string name="stat_total_displays">Displays (equivalent)</string>
+    <string name="stat_section_elements">By element</string>
+    <string name="stat_section_sets">By set</string>
+    <string name="stat_owned_cards">Cards owned</string>
+    <string name="stat_element_value">%1$d (%2$d %%)</string>
+    <string name="stat_booster_display">≈ %1$s boosters · %2$s displays</string>
+    <string name="stat_booster_only">≈ %1$s boosters</string>
+    <string name="stat_boxes">≈ %1$s boxes</string>
+    <string name="stat_element_neutral">Neutral</string>
+    <string name="stat_element_earth">Earth</string>
+    <string name="stat_element_fire">Fire</string>
+    <string name="stat_element_water">Water</string>
+    <string name="stat_element_air">Air</string>
+    <string name="stat_element_multi">Multi-element</string>
+
+    <!-- Room : partage de decks -->
+    <string name="room_tab_decks">Decks</string>
+    <string name="room_decks_mine">Share a deck</string>
+    <string name="room_decks_received">Received decks</string>
+    <string name="room_decks_mine_empty">You don\'t have a deck to share yet.</string>
+    <string name="room_decks_received_empty">The peer hasn\'t shared a deck yet.</string>
+    <string name="room_deck_share">Share</string>
+    <string name="room_deck_save">Save</string>
+    <string name="room_deck_saved">Deck saved</string>
+    <string name="room_deck_cards">%1$d cards</string>
+    <string name="room_deck_counts">%1$d spells · %2$d sites</string>
 </resources>

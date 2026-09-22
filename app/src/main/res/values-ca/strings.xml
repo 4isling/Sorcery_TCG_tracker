@@ -316,4 +316,80 @@
     <string name="saved_trades_done">Aplicat</string>
     <string name="saved_trades_apply">Aplica</string>
     <string name="saved_trades_delete">Elimina</string>
+
+    <!-- Minuteur de partie -->
+    <string name="game_timer_title">Crono</string>
+    <string name="game_timer_global">Temporitzador global (partida)</string>
+    <string name="game_timer_per_turn">Temporitzador per torn</string>
+    <string name="game_timer_minutes">Minuts</string>
+    <string name="game_timer_extra_turns">Torns de mort sobtada</string>
+    <string name="game_timer_expiry_title">En acabar-se el temps</string>
+    <string name="game_timer_expiry_sudden_death">Mort sobtada (torns addicionals)</string>
+    <string name="game_timer_expiry_verdict">Veredicte immediat (llindar de mort)</string>
+    <string name="game_timer_expiry_draw">Empat</string>
+    <string name="game_timer_expiry_none">Res (continuar jugant)</string>
+    <string name="game_timer_global_short">Partida</string>
+    <string name="game_timer_turn_short">Torn</string>
+    <string name="game_timer_pause">Posar en pausa</string>
+    <string name="game_timer_resume">Reprendre</string>
+    <string name="game_timer_sudden_death">Mort sobtada — %1$d torn(s)</string>
+    <string name="game_timer_finished">Temps esgotat</string>
+    <string name="game_timer_verdict_title">Fi del temps</string>
+    <string name="game_timer_verdict_winner">%1$s guanya.</string>
+    <string name="game_timer_verdict_draw">Empat.</string>
+    <string name="game_timer_verdict_ok">D\'acord</string>
+    <string name="game_history_duration">Durada: %1$s</string>
+
+    <!-- Collection / navigation -->
+    <string name="collection_foil_owned">✦ %1$d foil</string>
+    <string name="nav_statistics">Estadístiques</string>
+
+    <!-- Statistiques -->
+    <string name="stat_tab_collection">Col·lecció</string>
+    <string name="stat_tab_games">Partides</string>
+    <string name="stat_empty">Encara no hi ha cartes a la teva col·lecció.</string>
+    <string name="stat_games_empty">Encara no hi ha partides registrades.</string>
+    <string name="stat_donut_cards">cartes</string>
+    <string name="stat_donut_games">partides</string>
+    <string name="stat_cards_count">%1$d cartes</string>
+    <string name="stat_total_games">Partides jugades</string>
+    <string name="stat_average_turns">Torns de mitjana</string>
+    <string name="stat_average_duration">Durada mitjana</string>
+    <string name="stat_average_turn_duration">Durada mitjana per torn</string>
+    <string name="stat_duration_minutes">%1$d min %2$02d s</string>
+    <string name="stat_section_results">Resultats</string>
+    <string name="stat_section_avatars">Avatars més jugats</string>
+    <string name="stat_section_turns">Nombre de torns</string>
+    <string name="stat_result_p1">Victòries J1</string>
+    <string name="stat_result_p2">Victòries J2</string>
+    <string name="stat_result_draw">Empats</string>
+    <string name="stat_total_cards">Cartes en propietat</string>
+    <string name="stat_distinct_cards">Cartes diferents</string>
+    <string name="stat_total_boosters">Sobres (equivalent)</string>
+    <string name="stat_total_displays">Displays (equivalent)</string>
+    <string name="stat_section_elements">Per element</string>
+    <string name="stat_section_sets">Per expansió</string>
+    <string name="stat_owned_cards">Cartes en propietat</string>
+    <string name="stat_element_value">%1$d (%2$d %%)</string>
+    <string name="stat_booster_display">≈ %1$s sobres · %2$s displays</string>
+    <string name="stat_booster_only">≈ %1$s sobres</string>
+    <string name="stat_boxes">≈ %1$s caixes</string>
+    <string name="stat_element_neutral">Neutre</string>
+    <string name="stat_element_earth">Terra</string>
+    <string name="stat_element_fire">Foc</string>
+    <string name="stat_element_water">Aigua</string>
+    <string name="stat_element_air">Aire</string>
+    <string name="stat_element_multi">Multielement</string>
+
+    <!-- Room : partage de decks -->
+    <string name="room_tab_decks">Baralles</string>
+    <string name="room_decks_mine">Compartir una baralla</string>
+    <string name="room_decks_received">Baralles rebudes</string>
+    <string name="room_decks_mine_empty">Encara no tens cap baralla per compartir.</string>
+    <string name="room_decks_received_empty">L\'altre encara no ha compartit cap baralla.</string>
+    <string name="room_deck_share">Compartir</string>
+    <string name="room_deck_save">Desar</string>
+    <string name="room_deck_saved">Baralla desada</string>
+    <string name="room_deck_cards">%1$d cartes</string>
+    <string name="room_deck_counts">%1$d encanteris · %2$d llocs</string>
 </resources>
