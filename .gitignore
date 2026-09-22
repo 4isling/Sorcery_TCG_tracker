@@ -22,3 +22,8 @@ tools/__pycache__/
 keystore.properties
 *.jks
 *.keystore
+
+# Claude Code (hooks et contexte locaux)
+.claude/settings.local.json
+.claude/hooks/
+.claude/PROJECT_MAP.md
