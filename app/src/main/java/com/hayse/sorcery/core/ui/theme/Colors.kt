@@ -27,8 +27,8 @@ val DarkColorScheme = darkColorScheme(
 
 val ElementAir = Color(0xFF90A4AE)
 val ElementEarth = Color(0xFF8D6E63)
-val ElementFire = Color(0xFFE53935)
-val ElementWater = Color(0xFF1E88E5)
+val ElementFire = Color(0xFFF15A24)
+val ElementWater = Color(0xFF1A9BC4)
 
 fun Element.color(): Color = when (this) {
     Element.Air -> ElementAir

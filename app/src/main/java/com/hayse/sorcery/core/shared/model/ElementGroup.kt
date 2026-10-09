@@ -5,12 +5,15 @@ package com.hayse.sorcery.core.shared.model
  * `Neutral` = aucun élément, `Multi` = plusieurs éléments. L'ordre de déclaration
  * est l'ordre de rangement voulu (Neutre, Earth, Fire, Water, Air, Multi).
  */
-enum class ElementGroup {
+enum class ElementGroup(
+    /** Élément unique du groupe ; null pour Neutre et Multi. */
+    val element: Element? = null,
+) {
     Neutral,
-    Earth,
-    Fire,
-    Water,
-    Air,
+    Earth(Element.Earth),
+    Fire(Element.Fire),
+    Water(Element.Water),
+    Air(Element.Air),
     Multi,
 }
 

@@ -157,7 +157,14 @@ private fun DetailContent(
             if (card.subTypes.isNotEmpty()) append(" · ${card.subTypes.joinToString(", ")}")
             card.rarity?.let { append(" · ${it.name}") }
         }
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Élément(s) de la carte en tête du sous-titre, avec leur symbole.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.xs),
+        ) {
+            card.elements.forEach { element -> ElementIcon(element = element, size = 20.dp) }
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
 
         StatsRow(card)
         ThresholdsRow(card.thresholds)
@@ -285,7 +292,7 @@ private fun ThresholdsRow(thresholds: Map<Element, Int>) {
         Text(stringResource(R.string.cards_thresholds), style = MaterialTheme.typography.labelLarge)
         active.forEach { (element, value) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ElementIcon(element = element, size = 18.dp)
+                ElementIcon(element = element, size = 22.dp)
                 Text(" $value", style = MaterialTheme.typography.bodyMedium)
             }
         }

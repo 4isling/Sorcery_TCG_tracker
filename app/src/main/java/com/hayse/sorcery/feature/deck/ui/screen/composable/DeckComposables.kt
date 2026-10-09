@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,7 @@ import com.hayse.sorcery.core.shared.model.Ownership
 import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
+import com.hayse.sorcery.core.ui.composable.ElementIcon
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedCard
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedSectionTitle
 import com.hayse.sorcery.feature.deck.domain.model.DeckCatalogFilter
@@ -273,6 +275,7 @@ fun DeckFilterBar(
                 FilterChip(
                     selected = filter.element == entry,
                     onClick = { onElement(if (filter.element == entry) null else entry) },
+                    leadingIcon = { ElementIcon(element = entry, size = FilterChipDefaults.IconSize) },
                     label = { Text(entry.name) },
                 )
             }

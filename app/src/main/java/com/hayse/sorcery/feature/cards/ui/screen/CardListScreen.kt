@@ -51,6 +51,7 @@ import com.hayse.sorcery.core.shared.model.Rarity
 import com.hayse.sorcery.core.ui.ProvideCardList
 import com.hayse.sorcery.core.ui.ProvideTopBarSearch
 import com.hayse.sorcery.core.ui.composable.CardGridItem
+import com.hayse.sorcery.core.ui.composable.ElementIcon
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.composable.GroupLabelRow
 import com.hayse.sorcery.core.ui.composable.LoadingState
@@ -238,15 +239,21 @@ private fun FilterBar(
                 FilterChip(
                     selected = active,
                     onClick = { onElement(group) },
-                    leadingIcon = if (active && element.mode == ElementFilterMode.Exclude) {
-                        {
-                            Icon(
-                                imageVector = Icons.Default.Block,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize),
-                            )
+                    leadingIcon = when {
+                        active && element.mode == ElementFilterMode.Exclude -> {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Block,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                )
+                            }
                         }
-                    } else null,
+                        group.element != null -> {
+                            { ElementIcon(element = group.element, size = FilterChipDefaults.IconSize) }
+                        }
+                        else -> null
+                    },
                     label = { Text(group.name) },
                 )
             }
