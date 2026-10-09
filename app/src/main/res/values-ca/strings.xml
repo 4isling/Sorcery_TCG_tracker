@@ -102,6 +102,12 @@
     <string name="game_cancel">Cancel·lar</string>
     <string name="game_end_confirm_title">Voleu acabar la partida?</string>
     <string name="game_end_confirm_message">La partida es desarà a l\'historial.</string>
+    <string name="game_mode_title">Mode de seguiment</string>
+    <string name="game_mode_solo">Sol</string>
+    <string name="game_mode_duel">Duel</string>
+    <string name="game_mode_solo_hint">Segueix només el teu avatar: un únic panell, sense cara a cara.</string>
+    <string name="game_mode_duel_hint">Dos jugadors cara a cara al mateix dispositiu.</string>
+    <string name="game_history_solo">%1$s  (sol)</string>
     <string name="game_starting_life">Vida inicial</string>
     <string name="game_start">Començar</string>
     <string name="game_choose_avatar">Trieu un avatar</string>

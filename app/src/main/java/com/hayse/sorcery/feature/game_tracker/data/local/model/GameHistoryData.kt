@@ -1,5 +1,6 @@
 package com.hayse.sorcery.feature.game_tracker.data.local.model
 
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameRecord
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import kotlinx.serialization.Serializable
@@ -21,6 +22,8 @@ data class GameRecordData(
     val winner: String? = null,
     val turns: Int,
     val durationSeconds: Int? = null,
+    /** Nom d'enum de [GameMode] ; les parties antérieures au mode sont des duels. */
+    val mode: String = GameMode.Duel.name,
 )
 
 fun GameRecord.toData(): GameRecordData = GameRecordData(
@@ -32,6 +35,7 @@ fun GameRecord.toData(): GameRecordData = GameRecordData(
     winner = winner?.name,
     turns = turns,
     durationSeconds = durationSeconds,
+    mode = mode.name,
 )
 
 fun GameRecordData.toDomain(): GameRecord = GameRecord(
@@ -43,4 +47,5 @@ fun GameRecordData.toDomain(): GameRecord = GameRecord(
     winner = winner?.let { PlayerId.valueOf(it) },
     turns = turns,
     durationSeconds = durationSeconds,
+    mode = GameMode.entries.firstOrNull { it.name == mode } ?: GameMode.Duel,
 )

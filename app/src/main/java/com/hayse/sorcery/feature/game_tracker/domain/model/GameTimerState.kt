@@ -15,4 +15,6 @@ data class GameTimerState(
     val running: Boolean,
     val phase: TimerPhase,
     val extraTurnsLeft: Int,
+    /** Vrai une fois le verdict de fin de temps vu et fermé : il ne doit plus être représenté. */
+    val verdictAcknowledged: Boolean = false,
 )

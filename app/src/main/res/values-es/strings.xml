@@ -102,6 +102,12 @@
     <string name="game_cancel">Cancelar</string>
     <string name="game_end_confirm_title">¿Terminar la partida?</string>
     <string name="game_end_confirm_message">La partida se guardará en el historial.</string>
+    <string name="game_mode_title">Modo de seguimiento</string>
+    <string name="game_mode_solo">Solo</string>
+    <string name="game_mode_duel">Duelo</string>
+    <string name="game_mode_solo_hint">Sigue solo tu avatar: un único panel, sin cara a cara.</string>
+    <string name="game_mode_duel_hint">Dos jugadores cara a cara en el mismo dispositivo.</string>
+    <string name="game_history_solo">%1$s  (solo)</string>
     <string name="game_starting_life">Vida inicial</string>
     <string name="game_start">Empezar</string>
     <string name="game_choose_avatar">Elegir un avatar</string>

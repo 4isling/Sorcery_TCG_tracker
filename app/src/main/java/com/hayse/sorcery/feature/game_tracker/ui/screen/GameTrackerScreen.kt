@@ -55,6 +55,7 @@ import com.hayse.sorcery.core.ui.theme.sorcerySetFromName
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.core.ui.theme.skin.Skins
 import com.hayse.sorcery.core.ui.theme.skin.skinFor
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameTimerState
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
@@ -194,7 +195,15 @@ private fun GameContent(
         )
     }
 
-    if (LocalWindowWidthSizeClass.current.isExpanded) {
+    if (game.config.mode == GameMode.Solo) {
+        // Solo : un seul panneau (le mien), toujours à l'endroit, barre de contrôle en bas.
+        Column(modifier = modifier.fillMaxSize()) {
+            PlayerScrollBox(modifier = Modifier.weight(1f)) {
+                SelfPanel(game, viewModel, playerOneSet)
+            }
+            controlBar()
+        }
+    } else if (LocalWindowWidthSizeClass.current.isExpanded) {
         // Tablette paysage : joueurs côte-à-côte (sans rotation), barre de contrôle en bas.
         Column(modifier = modifier.fillMaxSize()) {
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {

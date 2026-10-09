@@ -16,6 +16,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +39,7 @@ import com.hayse.sorcery.core.ui.composable.CardImage
 import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameConfig
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerIdentity
 import com.hayse.sorcery.feature.game_tracker.domain.model.TimerConfig
@@ -72,6 +76,7 @@ private fun GameSetupContent(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
+    var mode by remember { mutableStateOf(GameConfig().mode) }
     var startingLife by remember { mutableIntStateOf(GameConfig().startingLife) }
     var p1Avatar by remember { mutableStateOf<PlayerIdentity?>(null) }
     var p2Avatar by remember { mutableStateOf<PlayerIdentity?>(null) }
@@ -105,6 +110,8 @@ private fun GameSetupContent(
             .padding(spacing.md),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
+        ModeSelector(mode = mode, onModeChange = { mode = it })
+
         Text(stringResource(R.string.game_starting_life), style = MaterialTheme.typography.titleMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
             CounterStepper(value = startingLife, onValueChange = { startingLife = it }, min = 1)
@@ -117,17 +124,22 @@ private fun GameSetupContent(
             onPseudoChange = { p1Pseudo = it },
             onPickAvatar = { pickerFor = PlayerId.One },
         )
-        PlayerSetupRow(
-            label = stringResource(R.string.game_player_two),
-            avatar = p2Avatar,
-            pseudo = p2Pseudo,
-            onPseudoChange = { p2Pseudo = it },
-            onPickAvatar = { pickerFor = PlayerId.Two },
-        )
+        // En solo, seul le joueur 1 est suivi : pas d'adversaire à configurer.
+        if (mode == GameMode.Duel) {
+            PlayerSetupRow(
+                label = stringResource(R.string.game_player_two),
+                avatar = p2Avatar,
+                pseudo = p2Pseudo,
+                onPseudoChange = { p2Pseudo = it },
+                onPickAvatar = { pickerFor = PlayerId.Two },
+            )
+        }
 
         HorizontalDivider()
 
         TimerSetupSection(
+            // Le verdict de fin de temps compare les deux avatars : sans adversaire, il n'a pas de sens.
+            showExpiry = mode == GameMode.Duel,
             enabled = timerEnabled,
             onEnabledChange = { timerEnabled = it },
             useGlobal = useGlobal,
@@ -154,8 +166,9 @@ private fun GameSetupContent(
                     onConfirm(
                         GameConfig(
                             startingLife = startingLife,
+                            mode = mode,
                             playerOne = identityOf(p1Avatar, p1Pseudo),
-                            playerTwo = identityOf(p2Avatar, p2Pseudo),
+                            playerTwo = if (mode == GameMode.Duel) identityOf(p2Avatar, p2Pseudo) else null,
                         ),
                         TimerConfig(
                             enabled = timerEnabled && (useGlobal || usePerTurn),
@@ -164,7 +177,7 @@ private fun GameSetupContent(
                             usePerTurn = usePerTurn,
                             perTurnSeconds = perTurnMinutes.coerceAtLeast(1) * 60,
                             extraTurns = extraTurns.coerceAtLeast(0),
-                            expiry = expiry,
+                            expiry = if (mode == GameMode.Duel) expiry else TimerExpiryAction.None,
                         ),
                     )
                 },
@@ -174,8 +187,46 @@ private fun GameSetupContent(
     }
 }
 
+/** Choix du mode de suivi : solo (mon avatar seulement) ou duel (deux joueurs en vis-à-vis). */
+@Composable
+private fun ModeSelector(mode: GameMode, onModeChange: (GameMode) -> Unit) {
+    val spacing = LocalSpacing.current
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
+        Text(stringResource(R.string.game_mode_title), style = MaterialTheme.typography.titleMedium)
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            GameMode.entries.forEachIndexed { index, option ->
+                SegmentedButton(
+                    selected = mode == option,
+                    onClick = { onModeChange(option) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = GameMode.entries.size),
+                ) {
+                    Text(stringResource(modeLabel(option)))
+                }
+            }
+        }
+        Text(
+            text = stringResource(modeHint(mode)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@StringRes
+private fun modeLabel(mode: GameMode): Int = when (mode) {
+    GameMode.Solo -> R.string.game_mode_solo
+    GameMode.Duel -> R.string.game_mode_duel
+}
+
+@StringRes
+private fun modeHint(mode: GameMode): Int = when (mode) {
+    GameMode.Solo -> R.string.game_mode_solo_hint
+    GameMode.Duel -> R.string.game_mode_duel_hint
+}
+
 @Composable
 private fun TimerSetupSection(
+    showExpiry: Boolean,
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     useGlobal: Boolean,
@@ -215,24 +266,26 @@ private fun TimerSetupSection(
                     onValueChange = onGlobalMinutesChange,
                 )
 
-                Text(
-                    text = stringResource(R.string.game_timer_expiry_title),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                TimerExpiryAction.entries.forEach { option ->
-                    ExpiryOptionRow(
-                        label = stringResource(expiryLabel(option)),
-                        selected = expiry == option,
-                        onSelect = { onExpiryChange(option) },
+                if (showExpiry) {
+                    Text(
+                        text = stringResource(R.string.game_timer_expiry_title),
+                        style = MaterialTheme.typography.titleSmall,
                     )
-                }
-                if (expiry == TimerExpiryAction.SuddenDeath) {
-                    TimerMinutesRow(
-                        label = stringResource(R.string.game_timer_extra_turns),
-                        value = extraTurns,
-                        onValueChange = onExtraTurnsChange,
-                        min = 0,
-                    )
+                    TimerExpiryAction.entries.forEach { option ->
+                        ExpiryOptionRow(
+                            label = stringResource(expiryLabel(option)),
+                            selected = expiry == option,
+                            onSelect = { onExpiryChange(option) },
+                        )
+                    }
+                    if (expiry == TimerExpiryAction.SuddenDeath) {
+                        TimerMinutesRow(
+                            label = stringResource(R.string.game_timer_extra_turns),
+                            value = extraTurns,
+                            onValueChange = onExtraTurnsChange,
+                            min = 0,
+                        )
+                    }
                 }
             }
 

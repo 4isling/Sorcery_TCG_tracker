@@ -23,6 +23,7 @@ data class GameTimerData(
     val phase: TimerPhase = TimerPhase.Normal,
     val extraTurnsLeft: Int = 0,
     val lastTickEpochMs: Long = 0L,
+    val verdictAcknowledged: Boolean = false,
 )
 
 fun GameTimerSnapshot.toData(): GameTimerData = GameTimerData(
@@ -39,6 +40,7 @@ fun GameTimerSnapshot.toData(): GameTimerData = GameTimerData(
     phase = state.phase,
     extraTurnsLeft = state.extraTurnsLeft,
     lastTickEpochMs = lastTickEpochMs,
+    verdictAcknowledged = state.verdictAcknowledged,
 )
 
 fun GameTimerData.toDomain(): GameTimerSnapshot = GameTimerSnapshot(
@@ -57,6 +59,7 @@ fun GameTimerData.toDomain(): GameTimerSnapshot = GameTimerSnapshot(
         running = running,
         phase = phase,
         extraTurnsLeft = extraTurnsLeft,
+        verdictAcknowledged = verdictAcknowledged,
     ),
     lastTickEpochMs = lastTickEpochMs,
 )

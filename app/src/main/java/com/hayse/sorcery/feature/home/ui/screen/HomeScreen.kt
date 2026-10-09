@@ -38,6 +38,7 @@ import com.hayse.sorcery.core.ui.theme.LocalSetSkin
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedCard
 import com.hayse.sorcery.core.ui.theme.skin.SkinnedSectionTitle
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameRecord
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.home.ui.viewmodel.HomeViewModel
@@ -203,9 +204,16 @@ private fun RecentGameRow(record: GameRecord, onClick: () -> Unit) {
                 text = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(record.playedAt)),
                 style = MaterialTheme.typography.labelMedium,
             )
+            val playerOne = playerLabel(record.playerOnePseudo, PlayerId.One)
             Text(
-                text = playerLabel(record.playerOnePseudo, PlayerId.One) +
-                    "  vs  " + playerLabel(record.playerTwoPseudo, PlayerId.Two),
+                text = when (record.mode) {
+                    GameMode.Solo -> stringResource(R.string.game_history_solo, playerOne)
+                    GameMode.Duel -> stringResource(
+                        R.string.game_history_versus,
+                        playerOne,
+                        playerLabel(record.playerTwoPseudo, PlayerId.Two),
+                    )
+                },
                 style = MaterialTheme.typography.titleMedium,
             )
         }

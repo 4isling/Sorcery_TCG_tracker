@@ -102,6 +102,12 @@
     <string name="game_cancel">Cancel</string>
     <string name="game_end_confirm_title">Finish the game?</string>
     <string name="game_end_confirm_message">The game will be saved to the history.</string>
+    <string name="game_mode_title">Tracking mode</string>
+    <string name="game_mode_solo">Solo</string>
+    <string name="game_mode_duel">Duel</string>
+    <string name="game_mode_solo_hint">Track only your own avatar: a single panel, no face-off.</string>
+    <string name="game_mode_duel_hint">Two players face to face on the same device.</string>
+    <string name="game_history_solo">%1$s  (solo)</string>
     <string name="game_starting_life">Starting life</string>
     <string name="game_start">Start</string>
     <string name="game_choose_avatar">Choose an avatar</string>

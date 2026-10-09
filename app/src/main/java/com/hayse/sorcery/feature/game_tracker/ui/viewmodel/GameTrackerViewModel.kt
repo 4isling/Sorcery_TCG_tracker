@@ -73,7 +73,9 @@ class GameTrackerViewModel(
             val persisted = repository.gameState.first()
             val ownerPseudo = playerPrefs.ownerPseudo.first()
             val timer = reconcileTimer(gameTimer.snapshot.first(), persisted)
-            val verdict = if (timer?.phase == TimerPhase.Finished && persisted != null) {
+            // Le verdict n'est représenté au retour que s'il n'a jamais été fermé : sinon il
+            // réapparaîtrait à chaque ouverture de l'écran (ViewModel recréé avec le sous-graphe).
+            val verdict = if (timer?.phase == TimerPhase.Finished && !timer.verdictAcknowledged && persisted != null) {
                 expiryVerdict(timer, persisted)
             } else {
                 null
@@ -152,6 +154,7 @@ class GameTrackerViewModel(
                 winner = outcome.winner,
                 turns = outcome.turns,
                 durationSeconds = duration,
+                mode = game.config.mode,
             )
             viewModelScope.launch { gameHistory.add(record) }
         }
@@ -188,8 +191,11 @@ class GameTrackerViewModel(
         persistTimer(next)
     }
 
+    /** Ferme le verdict et mémorise qu'il a été vu, pour ne plus le représenter à la réouverture. */
     fun dismissVerdict() {
-        _state.value = _state.value.copy(verdict = null)
+        val acknowledged = _state.value.timer?.copy(verdictAcknowledged = true)
+        _state.value = _state.value.copy(verdict = null, timer = acknowledged)
+        acknowledged?.let(::persistTimer)
     }
 
     fun rollDice(count: Int, faces: Int) = mutate { rollDiceUseCase(it, count, faces) }

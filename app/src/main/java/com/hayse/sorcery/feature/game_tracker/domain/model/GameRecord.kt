@@ -11,4 +11,5 @@ data class GameRecord(
     val turns: Int,
     /** Durée de la partie en secondes ; null si inconnue (parties antérieures au suivi). */
     val durationSeconds: Int? = null,
+    val mode: GameMode = GameMode.Duel,
 )

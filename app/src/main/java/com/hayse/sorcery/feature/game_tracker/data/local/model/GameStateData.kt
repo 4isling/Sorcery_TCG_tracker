@@ -3,6 +3,7 @@ package com.hayse.sorcery.feature.game_tracker.data.local.model
 import com.hayse.sorcery.core.shared.model.Element
 import com.hayse.sorcery.feature.game_tracker.domain.model.AvatarStatus
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameConfig
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerIdentity
@@ -21,6 +22,8 @@ data class GameStateData(
     val activePlayerIndex: Int,
     val history: List<GameEventData> = emptyList(),
     val startedAt: Long = 0L,
+    /** Nom d'enum de [GameMode] ; les parties antérieures au mode sont des duels. */
+    val mode: String = GameMode.Duel.name,
 )
 
 @Serializable
@@ -42,6 +45,7 @@ fun GameState.toData(): GameStateData = GameStateData(
     activePlayerIndex = if (activePlayer == PlayerId.One) 0 else 1,
     history = history.map { it.toData() },
     startedAt = startedAt,
+    mode = config.mode.name,
 )
 
 fun GameStateData.toDomain(): GameState {
@@ -52,6 +56,7 @@ fun GameStateData.toDomain(): GameState {
         // depuis initial(config)) reconstruise des joueurs identiques.
         config = GameConfig(
             startingLife = startingLife,
+            mode = GameMode.entries.firstOrNull { it.name == mode } ?: GameMode.Duel,
             playerOne = one.identity(),
             playerTwo = two.identity(),
         ),

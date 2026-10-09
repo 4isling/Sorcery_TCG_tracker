@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hayse.sorcery.R
 import com.hayse.sorcery.core.ui.composable.EmptyState
 import com.hayse.sorcery.core.ui.theme.dimensions.LocalSpacing
+import com.hayse.sorcery.feature.game_tracker.domain.model.GameMode
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameRecord
 import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 import com.hayse.sorcery.feature.game_tracker.ui.viewmodel.GameHistoryViewModel
@@ -63,12 +64,16 @@ private fun GameRecordCard(record: GameRecord) {
                     .format(Date(record.playedAt)),
                 style = MaterialTheme.typography.labelMedium,
             )
+            val playerOne = playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One)
             Text(
-                text = stringResource(
-                    R.string.game_history_versus,
-                    playerLabel(record.playerOnePseudo, record.playerOneAvatar, PlayerId.One),
-                    playerLabel(record.playerTwoPseudo, record.playerTwoAvatar, PlayerId.Two),
-                ),
+                text = when (record.mode) {
+                    GameMode.Solo -> stringResource(R.string.game_history_solo, playerOne)
+                    GameMode.Duel -> stringResource(
+                        R.string.game_history_versus,
+                        playerOne,
+                        playerLabel(record.playerTwoPseudo, record.playerTwoAvatar, PlayerId.Two),
+                    )
+                },
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
