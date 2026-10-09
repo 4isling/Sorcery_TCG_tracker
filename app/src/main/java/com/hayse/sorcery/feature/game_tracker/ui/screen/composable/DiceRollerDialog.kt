@@ -29,6 +29,7 @@ import com.hayse.sorcery.core.ui.composable.CounterStepper
 import com.hayse.sorcery.feature.game_tracker.domain.model.DiceRollPurpose
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameEvent
 import com.hayse.sorcery.feature.game_tracker.domain.model.GameState
+import com.hayse.sorcery.feature.game_tracker.domain.model.PlayerId
 
 private val PRESETS = listOf(2, 6, 10, 20)
 
@@ -45,6 +46,10 @@ fun DiceRollerDialog(
     var faces by remember { mutableIntStateOf(6) }
     val harbingerAvailable = game.players.values.any { it.avatarName == "Harbinger" }
     val lastRoll = game.history.lastOrNull { it is GameEvent.DiceRoll || it is GameEvent.FirstPlayerRoll }
+    // On n'anime que les jets lancés depuis cette ouverture de la dialog : un ancien résultat
+    // réaffiché à l'ouverture apparaît directement posé.
+    val historySizeAtOpen = remember { game.history.size }
+    val animateLastRoll = game.history.size > historySizeAtOpen && game.history.lastOrNull() === lastRoll
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -83,7 +88,7 @@ fun DiceRollerDialog(
 
                 if (lastRoll != null) {
                     HorizontalDivider()
-                    LastRollResult(lastRoll)
+                    LastRollResult(event = lastRoll, rollKey = game.history.size, animate = animateLastRoll)
                 }
             }
         },
@@ -93,8 +98,13 @@ fun DiceRollerDialog(
     )
 }
 
+/**
+ * Dernier jet : les dés roulent puis se posent ([AnimatedDiceRow]) ; le total ou le joueur désigné
+ * n'est révélé qu'une fois tous les dés figés, pour garder le suspense.
+ */
 @Composable
-private fun LastRollResult(event: GameEvent) {
+private fun LastRollResult(event: GameEvent, rollKey: Int, animate: Boolean) {
+    var settled by rememberDiceSettled(rollKey, animate)
     when (event) {
         is GameEvent.DiceRoll -> {
             val title = if (event.purpose == DiceRollPurpose.Harbinger) {
@@ -103,30 +113,43 @@ private fun LastRollResult(event: GameEvent) {
                 "${event.results.size}d${event.faces}"
             }
             Text(title, style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = event.results.joinToString("  ") { it.toString() },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+            AnimatedDiceRow(
+                results = event.results,
+                faces = event.faces,
+                rollKey = rollKey,
+                animate = animate,
+                onSettled = { settled = true },
             )
             if (event.purpose != DiceRollPurpose.Harbinger && event.results.size > 1) {
-                Text(
-                    stringResource(R.string.game_dice_total, event.results.sum()),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                DiceSettledReveal(visible = settled) {
+                    Text(
+                        stringResource(R.string.game_dice_total, event.results.sum()),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
 
         is GameEvent.FirstPlayerRoll -> {
             Text(stringResource(R.string.game_dice_first_player), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = if (event.chosen.name == "One") {
-                    stringResource(R.string.game_dice_player_one_starts)
-                } else {
-                    stringResource(R.string.game_dice_player_two_starts)
-                },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            AnimatedDiceRow(
+                results = event.results,
+                faces = 2,
+                rollKey = rollKey,
+                animate = animate,
+                onSettled = { settled = true },
             )
+            DiceSettledReveal(visible = settled) {
+                Text(
+                    text = if (event.chosen == PlayerId.One) {
+                        stringResource(R.string.game_dice_player_one_starts)
+                    } else {
+                        stringResource(R.string.game_dice_player_two_starts)
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
 
         else -> Unit
