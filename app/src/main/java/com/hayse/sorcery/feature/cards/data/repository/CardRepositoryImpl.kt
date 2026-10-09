@@ -35,18 +35,31 @@ class CardRepositoryImpl(
             ),
             collectionDao.observeEntries(),
         ) { rows, entries ->
-            val quantityBySlug = entries.associate { it.printingSlug to it.quantity }
+            // Une entrée par (slug, finish) : on cumule les finishes d'une même impression.
+            val quantityBySlug = entries.groupBy { it.printingSlug }.mapValues { (_, e) -> e.sumOf { it.quantity } }
             rows.asSequence()
                 .filter { filter.ownership == Ownership.All || keepByOwnership(it, quantityBySlug, filter.ownership) }
-                .flatMap { cwp -> toSetEntries(cwp, filter).asSequence() }
+                .flatMap { cwp -> toSetEntries(cwp, filter, quantityBySlug).asSequence() }
                 .filter { filter.element.matches(it.card.elements) }
                 .toList()
         }
 
-    private fun toSetEntries(cwp: CardWithPrintings, filter: CardFilter): List<SetEntry<Card>> {
+    /**
+     * Une entrée par set où la carte est imprimée. Pour les filtres Possédées / Surplus, seuls les
+     * sets où au moins une impression est possédée sont retenus : l'appartenance est jugée toutes
+     * impressions confondues, mais afficher « surplus » sous un set dont on n'a aucune copie serait
+     * trompeur.
+     */
+    private fun toSetEntries(
+        cwp: CardWithPrintings,
+        filter: CardFilter,
+        quantityBySlug: Map<String, Int>,
+    ): List<SetEntry<Card>> {
         val card = cwp.toCard(imageResolver::imageUriForSlugs)
-        val sets = if (filter.setName != null) listOf(filter.setName)
-        else cwp.printings.map { it.setName }.distinct()
+        val ownedOnly = filter.ownership == Ownership.Owned || filter.ownership == Ownership.Surplus
+        val printings = if (ownedOnly) cwp.printings.filter { (quantityBySlug[it.slug] ?: 0) > 0 } else cwp.printings
+        val sets = printings.map { it.setName }.distinct()
+            .let { names -> if (filter.setName != null) names.filter { it == filter.setName } else names }
         return sets.map { SetEntry(it, card, card) }
     }
 
